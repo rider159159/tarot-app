@@ -1,0 +1,25 @@
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - ./.env:/app/.env:ro
+    command: pnpm dev
+
+  backend:
+    build: ./backend
+    ports:
+      - "5098:5098"
+    volumes:
+      - ./backend:/app
+      - /app/TarotApi/bin
+      - /app/TarotApi/obj
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DOTNET_USE_POLLING_FILE_WATCHER=true
+      - DOTNET_WATCH_SUPPRESS_LAUNCH_BROWSER=true
