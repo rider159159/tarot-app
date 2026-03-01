@@ -73,7 +73,62 @@ public class ReadingService(TarotDbContext db, TarotService tarotService)
         return true;
     }
 
+    public async Task<ReadingStatsDto> GetStats(Guid userId)
+    {
+        var userReadings = db.Readings.Where(r => r.UserId == userId);
+
+        var totalCount = await userReadings.CountAsync();
+        var lastReadingAt = totalCount > 0
+            ? await userReadings.MaxAsync(r => (DateTime?)r.CreatedAt)
+            : null;
+
+        // Spread usage via LINQ GroupBy
+        var spreadUsage = await userReadings
+            .GroupBy(r => r.SpreadType)
+            .Select(g => new SpreadStatDto { SpreadType = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        // Top cards: use raw SQL to unnest JSONB array and aggregate card_id counts
+        var topCards = await db.Database
+            .SqlQueryRaw<CardStatRaw>(
+                """
+                SELECT card->>'card_id' AS CardId, COUNT(*) AS Count
+                FROM readings, jsonb_array_elements(cards) AS card
+                WHERE user_id = {0}
+                GROUP BY card->>'card_id'
+                ORDER BY Count DESC
+                LIMIT 5
+                """, userId)
+            .ToListAsync();
+
+        var topCardDtos = topCards.Select(tc =>
+        {
+            var cardInfo = TarotCards.GetById(tc.CardId);
+            return new CardStatDto
+            {
+                CardId = tc.CardId,
+                NameCht = cardInfo?.NameCht ?? tc.CardId,
+                Count = tc.Count
+            };
+        }).ToList();
+
+        return new ReadingStatsDto
+        {
+            TotalCount = totalCount,
+            TopCards = topCardDtos,
+            SpreadUsage = spreadUsage,
+            LastReadingAt = lastReadingAt
+        };
+    }
+
     // --- Helpers ---
+
+    // Raw SQL result type for card stats query
+    private class CardStatRaw
+    {
+        public string CardId { get; set; } = string.Empty;
+        public int Count { get; set; }
+    }
 
     private static string SpreadTypeToString(SpreadType type) => type switch
     {

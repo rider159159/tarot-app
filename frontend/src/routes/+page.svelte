@@ -1,6 +1,7 @@
 <script lang="ts">
-	import type { SpreadType, ReadingResult, ApiReadingResponse, DrawnCard } from '$lib/types';
+	import type { SpreadType, ReadingResult, ApiReadingResponse } from '$lib/types';
 	import { apiPost } from '$lib/api';
+	import { mapApiResponse } from '$lib/utils/reading';
 	import SpreadSelector from '$lib/components/SpreadSelector.svelte';
 	import QuestionInput from '$lib/components/QuestionInput.svelte';
 	import DrawButton from '$lib/components/DrawButton.svelte';
@@ -11,36 +12,6 @@
 	let loading: boolean = $state(false);
 	let reading: ReadingResult | null = $state(null);
 	let error: string | null = $state(null);
-
-	function mapApiResponse(res: ApiReadingResponse): ReadingResult {
-		const cards: DrawnCard[] = res.cards.map((c) => ({
-			card: {
-				id: c.cardId,
-				name: c.name,
-				nameCht: c.nameCht,
-				arcana: c.arcana as 'major' | 'minor',
-				suit: c.suit as 'wands' | 'cups' | 'swords' | 'pentacles' | undefined,
-				number: 0,
-				meaningUpright: c.orientation === 'upright' ? c.meaning : '',
-				meaningReversed: c.orientation === 'reversed' ? c.meaning : '',
-				keywords: c.keywords
-			},
-			orientation: c.orientation,
-			position: {
-				index: c.positionIndex,
-				label: c.positionLabel,
-				description: c.positionDescription
-			}
-		}));
-
-		return {
-			id: res.id,
-			spreadType: res.spreadType as SpreadType,
-			question: res.question ?? '',
-			cards,
-			createdAt: res.createdAt
-		};
-	}
 
 	async function handleDraw() {
 		loading = true;
@@ -71,12 +42,7 @@
 </svelte:head>
 
 <main>
-	<header>
-		<h1>塔羅占卜</h1>
-		<form method="POST" action="/auth/logout">
-			<button type="submit" class="logout-btn">登出</button>
-		</form>
-	</header>
+	<h1>塔羅占卜</h1>
 
 	<SpreadSelector bind:selected={selectedSpread} disabled={loading} />
 	<QuestionInput bind:value={question} disabled={loading} />
@@ -103,36 +69,10 @@
 		font-family: system-ui, -apple-system, sans-serif;
 	}
 
-	header {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		position: relative;
-		margin-bottom: 2rem;
-	}
-
 	h1 {
 		text-align: center;
 		color: #333;
-		margin: 0;
-	}
-
-	.logout-btn {
-		position: absolute;
-		right: 0;
-		padding: 0.375rem 0.75rem;
-		background: none;
-		border: 1px solid #999;
-		border-radius: 6px;
-		color: #666;
-		font-size: 0.8rem;
-		cursor: pointer;
-		font-family: inherit;
-	}
-
-	.logout-btn:hover {
-		border-color: #4a3060;
-		color: #4a3060;
+		margin: 0 0 2rem;
 	}
 
 	.error {

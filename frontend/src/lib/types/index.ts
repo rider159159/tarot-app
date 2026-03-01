@@ -101,3 +101,35 @@ export interface ApiReadingsPage {
 	page: number;
 	pageSize: number;
 }
+
+// === Profile API Types ===
+
+export interface ApiProfileResponse {
+	id: string;
+	displayName: string;
+	createdAt: string;
+}
+
+export interface ApiProfileUpdateRequest {
+	displayName: string;
+}
+
+// === Stats API Types ===
+
+export interface ApiCardStat {
+	cardId: string;
+	nameCht: string;
+	count: number;
+}
+
+export interface ApiSpreadStat {
+	spreadType: string;
+	count: number;
+}
+
+export interface ApiReadingStatsResponse {
+	totalCount: number;
+	topCards: ApiCardStat[];
+	spreadUsage: ApiSpreadStat[];
+	lastReadingAt: string | null;
+}

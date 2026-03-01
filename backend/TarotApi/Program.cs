@@ -38,6 +38,7 @@ builder.Services.AddControllers(options =>
 // Tarot services
 builder.Services.AddSingleton<TarotService>();
 builder.Services.AddScoped<ReadingService>();
+builder.Services.AddScoped<ProfileService>();
 
 builder.Services.AddEndpointsApiExplorer();
 

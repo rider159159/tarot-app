@@ -46,6 +46,14 @@ public class ReadingController(ReadingService readingService) : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("stats")]
+    public async Task<ActionResult<ReadingStatsDto>> GetStats()
+    {
+        var userId = User.GetUserId();
+        var stats = await readingService.GetStats(userId);
+        return Ok(stats);
+    }
+
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult> DeleteReading(Guid id)
     {
