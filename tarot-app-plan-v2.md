@@ -507,104 +507,78 @@ backend/TarotApi/
 
 ---
 
-## Phase 5：部署（Cloudflare Pages + Azure App Service）
+## Phase 5：部署（Zeabur — 前後端統一）✅ 已完成
 
-### 你需要先手動完成
+> **部署平台已由 Cloudflare Pages + Azure 改為 Zeabur**，前後端都在同一個 Zeabur Project，透過內部網路通訊。
 
-1. 註冊 [Cloudflare](https://dash.cloudflare.com/sign-up) 帳號（免費）
-2. 註冊 [Azure](https://azure.microsoft.com/free/) 帳號（免費，需信用卡但不會扣款）
-3. 在 Azure Portal 建立 App Service（選擇 F1 Free tier、.NET 8、Linux）
-4. 在 Cloudflare Pages 連結你的 GitHub repo
-5. 在 Supabase → Authentication → URL Configuration 加入 Cloudflare Pages 的網域作為 Redirect URL
+### 架構變更
 
-### Claude Code Prompt — Phase 5
+| 項目 | 舊方案 | 新方案 |
+|------|--------|--------|
+| 前端部署 | Cloudflare Pages（靜態） | Zeabur（Node.js server） |
+| 後端部署 | Azure App Service | Zeabur（同 Project） |
+| 前後端通訊 | 瀏覽器 → 後端 API（公開網路） | SvelteKit server → 後端 API（Zeabur 內部網路） |
+| CORS | 必須設定 | 選配（server-to-server 不需要） |
+| API Key 曝露 | JWT token 在瀏覽器 Network tab 可見 | token 只在 server 端，不暴露給瀏覽器 |
 
-```
-接續前面的 tarot-app 專案，請幫我完成 Phase 5：部署前端到 Cloudflare Pages + 後端到 Azure App Service。
+### 已完成的程式碼修改
 
-## 1. 前端部署（Cloudflare Pages）
+1. **Production Dockerfiles**
+   - `backend/Dockerfile`：multi-stage .NET 8 build，port 8080
+   - `frontend/Dockerfile`：multi-stage Node.js build，port 3000
+   - 原本 dev 用的重新命名為 `Dockerfile.dev`
 
-### 建置設定
-- 確認 svelte.config.js 使用 adapter-static
-- build output 目錄：frontend/build
-- SPA fallback：200.html
+2. **Server-side API wrapper**
+   - 新建 `frontend/src/lib/server/api.ts`
+   - 讀取 `INTERNAL_API_URL` env var（server-only），不暴露到瀏覽器
+   - Dev：`http://backend:5098`（Docker 內部 DNS）
+   - Prod：`http://<service>.zeabur.internal:8080`
 
-### 環境變數切換
-- 更新 src/lib/api.ts，讓 PUBLIC_API_BASE_URL 能在 production 指向 Azure
+3. **頁面改為 server-side 資料載入**
+   - `src/routes/+page.server.ts`：draw form action
+   - `src/routes/history/+page.server.ts`：load + delete action
+   - `src/routes/profile/+page.server.ts`：load + updateName action
+   - 3 個 `.svelte` 頁面改用 `$props()` 接收 `data` / `form`，使用 `use:enhance`
 
-### 文件
-建立 docs/deploy-frontend.md：
-- Cloudflare Pages Build settings：
-  - Root directory: frontend
-  - Build command: pnpm install && pnpm build
-  - Build output directory: build
-- 環境變數清單：
-  - PUBLIC_SUPABASE_URL
-  - PUBLIC_SUPABASE_ANON_KEY
-  - PUBLIC_API_BASE_URL（Azure App Service 的 URL，格式 https://你的app名.azurewebsites.net）
+4. **Capacitor 備用設定**
+   - `frontend/svelte.config.static.js`：adapter-static，供 Phase 6 iOS 打包使用
 
-## 2. 後端部署（Azure App Service）
+### 你需要在 Zeabur 手動完成
 
-### Production Dockerfile
-建立 backend/Dockerfile.prod：
-```dockerfile
-# Stage 1: Build
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
-COPY TarotApi/*.csproj ./TarotApi/
-RUN dotnet restore TarotApi/TarotApi.csproj
-COPY . .
-RUN dotnet publish TarotApi/TarotApi.csproj -c Release -o /app/publish
+1. 在 Zeabur Dashboard 建立新 Project
+2. 新增兩個 Service，都連結同一個 GitHub repo：
+   - **backend** 服務：Root Directory 設為 `backend/`，Zeabur 會自動偵測 `Dockerfile`
+   - **frontend** 服務：Root Directory 設為 `frontend/`
 
-# Stage 2: Runtime
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
-WORKDIR /app
-COPY --from=build /app/publish .
-ENV ASPNETCORE_URLS=http://+:8080
-EXPOSE 8080
-ENTRYPOINT ["dotnet", "TarotApi.dll"]
-```
+3. **後端服務環境變數**：
+   ```
+   PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+   SUPABASE_JWT_SECRET=你的JWT_SECRET
+   SUPABASE_DB_CONNECTION_STRING=你的連線字串
+   ALLOWED_ORIGINS=https://你的前端.zeabur.app
+   ASPNETCORE_ENVIRONMENT=Production
+   ```
 
-### Program.cs 更新
-- CORS AllowedOrigins 改為從環境變數/appsettings 讀取（不再寫死 localhost）
-- 確保 production 環境下 Swagger 關閉（或受保護）
-- 加入 Health check middleware（Azure 會用來確認 app 是否存活）
+4. **前端服務環境變數**（build 時需要 PUBLIC_* 變數）：
+   ```
+   PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+   PUBLIC_SUPABASE_ANON_KEY=你的anon_key
+   INTERNAL_API_URL=http://backend.zeabur.internal:8080
+   ```
+   > 注意：`INTERNAL_API_URL` 中的 `backend` 要換成你在 Zeabur 上的後端服務名稱
 
-### GitHub Actions CI/CD
-建立 .github/workflows/deploy-backend.yml：
-- 觸發條件：push to main，且 backend/ 目錄有變更
-- 步驟：
-  1. checkout
-  2. dotnet restore + build + test（如有測試）
-  3. dotnet publish
-  4. 部署到 Azure App Service（使用 azure/webapps-deploy action）
-- 需要的 GitHub Secrets：AZURE_WEBAPP_PUBLISH_PROFILE
+5. 在 Supabase → Authentication → URL Configuration 加入前端 Zeabur 網域作為 Redirect URL
 
-建立 .github/workflows/deploy-frontend.yml（可選，Cloudflare Pages 本身有 Git 整合）：
-- 觸發條件：push to main，且 frontend/ 目錄有變更
-- 或直接用 Cloudflare Pages 的 GitHub 自動部署功能
+### 驗證清單
 
-### Azure App Service 環境變數
-建立 docs/deploy-backend.md，說明需要在 Azure Portal → Configuration → Application Settings 設定：
-```
-Supabase__JwtSecret=你的JWT_SECRET
-Supabase__DbConnectionString=你的連線字串
-AllowedOrigins__0=https://你的前端.pages.dev
-```
-
-### Supabase 安全設定
-- 確認 RLS 都有開啟
-- 確認 .NET API 用的 connection string 不是 service_role key（用 anon 或專用 DB 帳號）
-
-## 3. 驗證清單
-- 前端 Cloudflare Pages 部署成功，能正常打開
-- 後端 Azure App Service 部署成功，/api/health 回傳正常
-- 前端能透過 Azure URL 打到後端 API
-- 登入/註冊流程正常
-- 抽牌功能正常
-- CORS 沒有報錯
-- HTTPS 正常運作（兩邊都是）
-```
+- [ ] `docker compose up --build` 前後端都能啟動（本地驗證）
+- [ ] 後端 health check：`https://你的後端.zeabur.app/api/health`
+- [ ] 前端能正常打開
+- [ ] 登入/註冊流程正常
+- [ ] 抽牌功能正常（form action 觸發）
+- [ ] 歷史紀錄正常（分頁、刪除）
+- [ ] 個人頁面正常（資料顯示、名稱更新）
+- [ ] 瀏覽器 Network tab 看不到直接打 .NET API 的請求
 
 ---
 

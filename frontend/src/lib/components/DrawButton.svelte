@@ -4,13 +4,13 @@
 		loading = false,
 		disabled = false
 	}: {
-		onclick: () => void;
+		onclick?: () => void;
 		loading?: boolean;
 		disabled?: boolean;
 	} = $props();
 </script>
 
-<button {onclick} disabled={disabled || loading} class="draw-btn">
+<button type="submit" {onclick} disabled={disabled || loading} class="draw-btn">
 	{loading ? '抽牌中...' : '抽牌'}
 </button>
 

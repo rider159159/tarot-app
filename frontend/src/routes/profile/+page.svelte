@@ -1,69 +1,28 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
-	import type { ApiProfileResponse, ApiReadingStatsResponse } from '$lib/types';
-	import { apiGet, apiPut } from '$lib/api';
 	import { getSpreadName, formatDate } from '$lib/utils/reading';
+	import type { PageData, ActionData } from './$types';
 
-	let profile: ApiProfileResponse | null = $state(null);
-	let stats: ApiReadingStatsResponse | null = $state(null);
-	let loading: boolean = $state(true);
-	let error: string | null = $state(null);
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let editing: boolean = $state(false);
 	let editName: string = $state('');
 	let saving: boolean = $state(false);
-	let saveError: string | null = $state(null);
 
 	let email = $derived($page.data.user?.email ?? '');
 
-	async function loadData() {
-		loading = true;
-		error = null;
-		try {
-			const [profileRes, statsRes] = await Promise.all([
-				apiGet<ApiProfileResponse>('/api/profile'),
-				apiGet<ApiReadingStatsResponse>('/api/readings/stats')
-			]);
-			profile = profileRes;
-			stats = statsRes;
-		} catch (err) {
-			error = err instanceof Error ? err.message : '載入失敗，請稍後再試';
-		} finally {
-			loading = false;
-		}
-	}
+	// Reflect successful name update into local state
+	let displayName = $derived(form?.profile?.displayName ?? data.profile.displayName);
 
 	function startEdit() {
-		editName = profile?.displayName ?? '';
+		editName = displayName;
 		editing = true;
-		saveError = null;
 	}
 
 	function cancelEdit() {
 		editing = false;
-		saveError = null;
 	}
-
-	async function saveDisplayName() {
-		saving = true;
-		saveError = null;
-		try {
-			const updated = await apiPut<ApiProfileResponse>('/api/profile', {
-				displayName: editName
-			});
-			profile = updated;
-			editing = false;
-		} catch (err) {
-			saveError = err instanceof Error ? err.message : '儲存失敗，請稍後再試';
-		} finally {
-			saving = false;
-		}
-	}
-
-	onMount(() => {
-		loadData();
-	});
 </script>
 
 <svelte:head>
@@ -73,91 +32,98 @@
 <main>
 	<h1>個人頁面</h1>
 
-	{#if loading}
-		<p class="status">載入中...</p>
-	{:else if error}
-		<p class="error">{error}</p>
-	{:else}
-		<section class="profile-section">
-			<h2>個人資料</h2>
-			<div class="info-row">
-				<span class="label">Email</span>
-				<span class="value">{email}</span>
-			</div>
-			<div class="info-row">
-				<span class="label">顯示名稱</span>
-				{#if editing}
-					<div class="edit-group">
-						<input
-							type="text"
-							bind:value={editName}
-							disabled={saving}
-							class="edit-input"
-						/>
-						<button class="save-btn" onclick={saveDisplayName} disabled={saving}>
-							{saving ? '儲存中...' : '儲存'}
-						</button>
-						<button class="cancel-btn" onclick={cancelEdit} disabled={saving}>
-							取消
-						</button>
-					</div>
-				{:else}
-					<span class="value">
-						{profile?.displayName ?? '-'}
-						<button class="edit-btn" onclick={startEdit}>編輯</button>
-					</span>
-				{/if}
-			</div>
-			{#if saveError}
-				<p class="error">{saveError}</p>
+	<section class="profile-section">
+		<h2>個人資料</h2>
+		<div class="info-row">
+			<span class="label">Email</span>
+			<span class="value">{email}</span>
+		</div>
+		<div class="info-row">
+			<span class="label">顯示名稱</span>
+			{#if editing}
+				<form
+					method="POST"
+					action="?/updateName"
+					class="edit-group"
+					use:enhance={() => {
+						saving = true;
+						return async ({ update, result }) => {
+							saving = false;
+							if (result.type === 'success') {
+								editing = false;
+							}
+							await update();
+						};
+					}}
+				>
+					<input
+						type="text"
+						name="displayName"
+						bind:value={editName}
+						disabled={saving}
+						class="edit-input"
+					/>
+					<button type="submit" class="save-btn" disabled={saving}>
+						{saving ? '儲存中...' : '儲存'}
+					</button>
+					<button type="button" class="cancel-btn" onclick={cancelEdit} disabled={saving}>
+						取消
+					</button>
+				</form>
+			{:else}
+				<span class="value">
+					{displayName}
+					<button class="edit-btn" onclick={startEdit}>編輯</button>
+				</span>
 			{/if}
-		</section>
+		</div>
+		{#if form?.error}
+			<p class="error">{form.error}</p>
+		{/if}
+	</section>
 
-		{#if stats}
-			<section class="stats-section">
-				<h2>統計資料</h2>
-				<div class="stat-card">
-					<span class="stat-label">總抽牌次數</span>
-					<span class="stat-value">{stats.totalCount} 次</span>
-				</div>
+	<section class="stats-section">
+		<h2>統計資料</h2>
+		<div class="stat-card">
+			<span class="stat-label">總抽牌次數</span>
+			<span class="stat-value">{data.stats.totalCount} 次</span>
+		</div>
 
-				{#if stats.lastReadingAt}
-					<div class="stat-card">
-						<span class="stat-label">最近一次抽牌</span>
-						<span class="stat-value">{formatDate(stats.lastReadingAt)}</span>
-					</div>
-				{/if}
-
-				{#if stats.spreadUsage.length > 0}
-					<div class="stat-card">
-						<span class="stat-label">牌陣使用次數</span>
-						<ul class="stat-list">
-							{#each stats.spreadUsage as usage}
-								<li>{getSpreadName(usage.spreadType)}：{usage.count} 次</li>
-							{/each}
-						</ul>
-					</div>
-				{/if}
-
-				{#if stats.topCards.length > 0}
-					<div class="stat-card">
-						<span class="stat-label">最常抽到的牌 Top 5</span>
-						<ol class="stat-list ranked">
-							{#each stats.topCards as card, i}
-								<li>{card.nameCht}：{card.count} 次</li>
-							{/each}
-						</ol>
-					</div>
-				{/if}
-			</section>
+		{#if data.stats.lastReadingAt}
+			<div class="stat-card">
+				<span class="stat-label">最近一次抽牌</span>
+				<span class="stat-value">{formatDate(data.stats.lastReadingAt)}</span>
+			</div>
 		{/if}
 
-		<section class="logout-section">
-			<form method="POST" action="/auth/logout">
-				<button type="submit" class="logout-btn">登出</button>
-			</form>
-		</section>
-	{/if}
+		{#if data.stats.spreadUsage.length > 0}
+			<div class="stat-card">
+				<span class="stat-label">牌陣使用次數</span>
+				<ul class="stat-list">
+					{#each data.stats.spreadUsage as usage}
+						<li>{getSpreadName(usage.spreadType)}：{usage.count} 次</li>
+					{/each}
+				</ul>
+			</div>
+		{/if}
+
+		{#if data.stats.topCards.length > 0}
+			<div class="stat-card">
+				<span class="stat-label">最常抽到的牌 Top 5</span>
+				<ol class="stat-list ranked">
+					{#each data.stats.topCards as card}
+						<li>{card.nameCht}：{card.count} 次</li>
+					{/each}
+				</ol>
+			</div>
+		{/if}
+	</section>
+
+	<section class="logout-section">
+		<form method="POST" action="/auth/logout">
+			<button type="submit" class="logout-btn">登出</button>
+		</form>
+	</section>
 </main>
 
 <style>
@@ -178,11 +144,6 @@
 		color: #4a3060;
 		font-size: 1.1rem;
 		margin: 0 0 1rem;
-	}
-
-	.status {
-		text-align: center;
-		color: #666;
 	}
 
 	.error {

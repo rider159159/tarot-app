@@ -1,60 +1,24 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import type { ApiReadingsPage, ApiReadingResponse } from '$lib/types';
-	import { apiGet, apiDelete } from '$lib/api';
+	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import type { ApiReadingResponse } from '$lib/types';
 	import { getSpreadName, formatDate } from '$lib/utils/reading';
+	import type { PageData, ActionData } from './$types';
 
-	const PAGE_SIZE = 10;
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
-	let readings: ApiReadingResponse[] = $state([]);
-	let totalCount: number = $state(0);
-	let currentPage: number = $state(1);
-	let loading: boolean = $state(true);
-	let error: string | null = $state(null);
 	let expandedId: string | null = $state(null);
-	let deleting: string | null = $state(null);
+	let deletingId: string | null = $state(null);
 
-	let totalPages = $derived(Math.ceil(totalCount / PAGE_SIZE));
-
-	async function loadReadings(page: number) {
-		loading = true;
-		error = null;
-		try {
-			const res = await apiGet<ApiReadingsPage>(`/api/readings?page=${page}&pageSize=${PAGE_SIZE}`);
-			readings = res.items;
-			totalCount = res.totalCount;
-			currentPage = page;
-		} catch (err) {
-			error = err instanceof Error ? err.message : '載入失敗，請稍後再試';
-		} finally {
-			loading = false;
-		}
-	}
+	let totalPages = $derived(Math.ceil(data.totalCount / data.pageSize));
 
 	function toggleExpand(id: string) {
 		expandedId = expandedId === id ? null : id;
 	}
 
-	async function handleDelete(id: string) {
-		if (!confirm('確定要刪除這筆抽牌紀錄嗎？')) return;
-
-		deleting = id;
-		try {
-			await apiDelete(`/api/readings/${id}`);
-			await loadReadings(currentPage);
-			if (readings.length === 0 && currentPage > 1) {
-				await loadReadings(currentPage - 1);
-			}
-		} catch (err) {
-			error = err instanceof Error ? err.message : '刪除失敗，請稍後再試';
-		} finally {
-			deleting = null;
-		}
+	function goToPage(page: number) {
+		goto(`?page=${page}`, { keepFocus: true });
 	}
-
-	onMount(() => {
-		loadReadings(1);
-	});
 </script>
 
 <svelte:head>
@@ -64,18 +28,18 @@
 <main>
 	<h1>歷史紀錄</h1>
 
-	{#if loading}
-		<p class="status">載入中...</p>
-	{:else if error}
-		<p class="error">{error}</p>
-	{:else if readings.length === 0}
+	{#if form?.error}
+		<p class="error">{form.error}</p>
+	{/if}
+
+	{#if data.readings.length === 0}
 		<div class="empty">
 			<p>還沒有抽牌紀錄，去抽一張吧！</p>
 			<a href="/" class="action-btn">前往抽牌</a>
 		</div>
 	{:else}
 		<div class="readings-list">
-			{#each readings as reading (reading.id)}
+			{#each data.readings as reading (reading.id)}
 				<article class="reading-item">
 					<button
 						class="reading-header"
@@ -114,13 +78,31 @@
 									</div>
 								</div>
 							{/each}
-							<button
-								class="delete-btn"
-								onclick={() => handleDelete(reading.id)}
-								disabled={deleting === reading.id}
+							<form
+								method="POST"
+								action="?/delete"
+								use:enhance={({ cancel }) => {
+									if (!confirm('確定要刪除這筆抽牌紀錄嗎？')) {
+										cancel();
+										return;
+									}
+									deletingId = reading.id;
+									return async ({ update }) => {
+										deletingId = null;
+										expandedId = null;
+										await update();
+									};
+								}}
 							>
-								{deleting === reading.id ? '刪除中...' : '刪除此紀錄'}
-							</button>
+								<input type="hidden" name="id" value={reading.id} />
+								<button
+									type="submit"
+									class="delete-btn"
+									disabled={deletingId === reading.id}
+								>
+									{deletingId === reading.id ? '刪除中...' : '刪除此紀錄'}
+								</button>
+							</form>
 						</div>
 					{/if}
 				</article>
@@ -131,16 +113,16 @@
 			<div class="pagination">
 				<button
 					class="page-btn"
-					onclick={() => loadReadings(currentPage - 1)}
-					disabled={currentPage <= 1}
+					onclick={() => goToPage(data.currentPage - 1)}
+					disabled={data.currentPage <= 1}
 				>
 					上一頁
 				</button>
-				<span class="page-info">{currentPage} / {totalPages}</span>
+				<span class="page-info">{data.currentPage} / {totalPages}</span>
 				<button
 					class="page-btn"
-					onclick={() => loadReadings(currentPage + 1)}
-					disabled={currentPage >= totalPages}
+					onclick={() => goToPage(data.currentPage + 1)}
+					disabled={data.currentPage >= totalPages}
 				>
 					下一頁
 				</button>
@@ -161,11 +143,6 @@
 		text-align: center;
 		color: #333;
 		margin: 0 0 2rem;
-	}
-
-	.status {
-		text-align: center;
-		color: #666;
 	}
 
 	.error {

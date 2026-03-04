@@ -1,18 +1,24 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0
+# ── Stage 1: Build ────────────────────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
 
-WORKDIR /app
-
-# Copy solution and project file first for layer caching
+# Copy project files first for layer caching
 COPY TarotApi.sln ./
 COPY TarotApi/TarotApi.csproj ./TarotApi/
-
-# Restore dependencies (cached unless .csproj changes)
 RUN dotnet restore
 
-# Copy everything else
+# Copy source and publish
 COPY . .
+RUN dotnet publish TarotApi/TarotApi.csproj -c Release -o /app/publish --no-restore
 
-EXPOSE 5098
+# ── Stage 2: Runtime ──────────────────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
+WORKDIR /app
 
-# dotnet watch for hot reload during development
-CMD ["dotnet", "watch", "run", "--project", "TarotApi", "--urls", "http://0.0.0.0:5098"]
+COPY --from=build /app/publish .
+
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+ENTRYPOINT ["dotnet", "TarotApi.dll"]

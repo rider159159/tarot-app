@@ -51,7 +51,8 @@
       "Bash(docker compose -f /Users/ryder/Documents/Project/sideProject/tarot-app/docker-compose.yml exec backend nslookup aws-1-ap-northeast-2.pooler.supabase.com)",
       "Bash(docker compose -f /Users/ryder/Documents/Project/sideProject/tarot-app/docker-compose.yml exec backend ping -c 1 aws-1-ap-northeast-2.pooler.supabase.com)",
       "Bash(docker compose -f /Users/ryder/Documents/Project/sideProject/tarot-app/docker-compose.yml exec backend getent hosts aws-1-ap-northeast-2.pooler.supabase.com)",
-      "Bash(docker compose -f /Users/ryder/Documents/Project/sideProject/tarot-app/docker-compose.yml exec backend printenv SUPABASE_DB_CONNECTION_STRING)"
+      "Bash(docker compose -f /Users/ryder/Documents/Project/sideProject/tarot-app/docker-compose.yml exec backend printenv SUPABASE_DB_CONNECTION_STRING)",
+      "WebFetch(domain:zeabur.com)"
     ]
   }
 }

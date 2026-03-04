@@ -1,39 +1,34 @@
 <script lang="ts">
-	import type { SpreadType, ReadingResult, ApiReadingResponse } from '$lib/types';
-	import { apiPost } from '$lib/api';
+	import { enhance } from '$app/forms';
+	import type { SpreadType, ReadingResult } from '$lib/types';
 	import { mapApiResponse } from '$lib/utils/reading';
 	import SpreadSelector from '$lib/components/SpreadSelector.svelte';
 	import QuestionInput from '$lib/components/QuestionInput.svelte';
 	import DrawButton from '$lib/components/DrawButton.svelte';
 	import ReadingDisplay from '$lib/components/ReadingDisplay.svelte';
+	import type { ActionData } from './$types';
+
+	let { form }: { form: ActionData } = $props();
 
 	let selectedSpread: SpreadType = $state('single');
 	let question: string = $state('');
 	let loading: boolean = $state(false);
 	let reading: ReadingResult | null = $state(null);
-	let error: string | null = $state(null);
 
-	async function handleDraw() {
-		loading = true;
-		reading = null;
-		error = null;
-
-		try {
-			const res = await apiPost<ApiReadingResponse>('/api/readings', {
-				spreadType: selectedSpread === 'three-card' ? 'ThreeCard' : selectedSpread === 'celtic-cross' ? 'CelticCross' : 'Single',
-				question: question || null
-			});
-			reading = mapApiResponse(res);
-		} catch (err) {
-			error = err instanceof Error ? err.message : '抽牌失敗，請稍後再試';
-		} finally {
-			loading = false;
+	$effect(() => {
+		if (form?.reading) {
+			reading = mapApiResponse(form.reading);
 		}
-	}
+	});
 
 	function handleDrawAgain() {
 		reading = null;
-		error = null;
+	}
+
+	function getSpreadTypeForApi(spread: SpreadType): string {
+		if (spread === 'three-card') return 'ThreeCard';
+		if (spread === 'celtic-cross') return 'CelticCross';
+		return 'Single';
 	}
 </script>
 
@@ -44,15 +39,30 @@
 <main>
 	<h1>塔羅占卜</h1>
 
-	<SpreadSelector bind:selected={selectedSpread} disabled={loading} />
-	<QuestionInput bind:value={question} disabled={loading} />
-	<DrawButton onclick={handleDraw} {loading} />
+	{#if !reading}
+		<form
+			method="POST"
+			action="?/draw"
+			use:enhance={() => {
+				loading = true;
+				return async ({ update }) => {
+					loading = false;
+					await update();
+				};
+			}}
+		>
+			<input type="hidden" name="spreadType" value={getSpreadTypeForApi(selectedSpread)} />
+			<input type="hidden" name="question" value={question} />
 
-	{#if error}
-		<p class="error">{error}</p>
-	{/if}
+			<SpreadSelector bind:selected={selectedSpread} disabled={loading} />
+			<QuestionInput bind:value={question} disabled={loading} />
+			<DrawButton {loading} />
+		</form>
 
-	{#if reading}
+		{#if form?.error}
+			<p class="error">{form.error}</p>
+		{/if}
+	{:else}
 		<ReadingDisplay {reading} />
 		<div class="actions">
 			<button class="action-btn" onclick={handleDrawAgain}>再抽一次</button>
