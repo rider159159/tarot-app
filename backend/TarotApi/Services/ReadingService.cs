@@ -133,7 +133,9 @@ public class ReadingService(TarotDbContext db, TarotService tarotService)
     private static string SpreadTypeToString(SpreadType type) => type switch
     {
         SpreadType.Single => "single",
-        SpreadType.ThreeCard => "three-card",
+        SpreadType.ThreeCardTime => "three-card-time",
+        SpreadType.ThreeCardProblem => "three-card-problem",
+        SpreadType.ThreeCardLinear => "three-card-linear",
         SpreadType.CelticCross => "celtic-cross",
         _ => throw new ArgumentOutOfRangeException(nameof(type))
     };
@@ -155,7 +157,10 @@ public class ReadingService(TarotDbContext db, TarotService tarotService)
             var spreadType = reading.SpreadType switch
             {
                 "single" => SpreadType.Single,
-                "three-card" => SpreadType.ThreeCard,
+                "three-card" => SpreadType.ThreeCardTime,
+                "three-card-time" => SpreadType.ThreeCardTime,
+                "three-card-problem" => SpreadType.ThreeCardProblem,
+                "three-card-linear" => SpreadType.ThreeCardLinear,
                 "celtic-cross" => SpreadType.CelticCross,
                 _ => SpreadType.Single
             };
@@ -163,7 +168,7 @@ public class ReadingService(TarotDbContext db, TarotService tarotService)
             var positions = TarotService.GetPositions(spreadType);
             var position = positionIndex < positions.Length
                 ? positions[positionIndex]
-                : new SpreadPosition(positionIndex, "", "");
+                : new SpreadPosition(positionIndex, "你的感受", "你對此問題最真實的內心感受");
 
             results.Add(new TarotService.DrawnCardResult(card, orientation, position));
         }

@@ -6,6 +6,8 @@ namespace TarotApi.Models;
 public enum SpreadType
 {
     Single,
-    ThreeCard,
+    ThreeCardTime,
+    ThreeCardProblem,
+    ThreeCardLinear,
     CelticCross
 }

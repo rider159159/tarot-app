@@ -12,11 +12,23 @@ public class TarotService
         [
             new(0, "指引", "此刻對你最重要的訊息")
         ],
-        [SpreadType.ThreeCard] =
+        [SpreadType.ThreeCardTime] =
         [
             new(0, "過去", "影響當前情況的過去因素"),
             new(1, "現在", "目前的狀態與挑戰"),
             new(2, "未來", "如果沿著目前道路前進的可能發展")
+        ],
+        [SpreadType.ThreeCardProblem] =
+        [
+            new(0, "問題", "你目前面對的核心問題"),
+            new(1, "原因", "造成這個問題的根本原因"),
+            new(2, "對策", "可能的解決方向與建議")
+        ],
+        [SpreadType.ThreeCardLinear] =
+        [
+            new(0, "第一張", "牌陣中的第一個訊息"),
+            new(1, "第二張", "牌陣中的第二個訊息"),
+            new(2, "第三張", "牌陣中的第三個訊息")
         ],
         [SpreadType.CelticCross] =
         [
@@ -48,12 +60,22 @@ public class TarotService
             (indices[i], indices[j]) = (indices[j], indices[i]);
         }
 
-        var results = new List<DrawnCardResult>(positions.Length);
+        var totalCards = spreadType == SpreadType.Single ? positions.Length : positions.Length + 1;
+        var results = new List<DrawnCardResult>(totalCards);
         for (var i = 0; i < positions.Length; i++)
         {
             var card = allCards[indices[i]];
             var orientation = RandomNumberGenerator.GetInt32(2) == 0 ? "upright" : "reversed";
             results.Add(new DrawnCardResult(card, orientation, positions[i]));
+        }
+
+        // Append feeling card for non-Single spreads
+        if (spreadType != SpreadType.Single)
+        {
+            var feelingCard = allCards[indices[positions.Length]];
+            var feelingOrientation = RandomNumberGenerator.GetInt32(2) == 0 ? "upright" : "reversed";
+            var feelingPosition = new SpreadPosition(positions.Length, "你的感受", "你對此問題最真實的內心感受");
+            results.Add(new DrawnCardResult(feelingCard, feelingOrientation, feelingPosition));
         }
 
         return results;

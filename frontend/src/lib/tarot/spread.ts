@@ -17,15 +17,39 @@ const singleSpread: SpreadConfig = {
 	positions: [{ index: 0, label: '指引', description: '此刻對你最重要的訊息' }]
 };
 
-const threeCardSpread: SpreadConfig = {
-	type: 'three-card',
-	name: '三張牌',
+const threeCardTimeSpread: SpreadConfig = {
+	type: 'three-card-time',
+	name: '三張牌 — 時間流',
 	description: '過去、現在、未來的時間線展開。',
 	cardCount: 3,
 	positions: [
 		{ index: 0, label: '過去', description: '影響當前情況的過去因素' },
 		{ index: 1, label: '現在', description: '目前的狀態與挑戰' },
 		{ index: 2, label: '未來', description: '如果沿著目前道路前進的可能發展' }
+	]
+};
+
+const threeCardProblemSpread: SpreadConfig = {
+	type: 'three-card-problem',
+	name: '三張牌 — 問題對策',
+	description: '分析問題的核心、原因與解決方向。',
+	cardCount: 3,
+	positions: [
+		{ index: 0, label: '問題', description: '你目前面對的核心問題' },
+		{ index: 1, label: '原因', description: '造成這個問題的根本原因' },
+		{ index: 2, label: '對策', description: '可能的解決方向與建議' }
+	]
+};
+
+const threeCardLinearSpread: SpreadConfig = {
+	type: 'three-card-linear',
+	name: '三張牌 — 線性展開',
+	description: '三張牌依序展開，不帶預設含義。',
+	cardCount: 3,
+	positions: [
+		{ index: 0, label: '第一張', description: '牌陣中的第一個訊息' },
+		{ index: 1, label: '第二張', description: '牌陣中的第二個訊息' },
+		{ index: 2, label: '第三張', description: '牌陣中的第三個訊息' }
 	]
 };
 
@@ -50,7 +74,9 @@ const celticCrossSpread: SpreadConfig = {
 
 export const spreadConfigs: Record<SpreadType, SpreadConfig> = {
 	single: singleSpread,
-	'three-card': threeCardSpread,
+	'three-card-time': threeCardTimeSpread,
+	'three-card-problem': threeCardProblemSpread,
+	'three-card-linear': threeCardLinearSpread,
 	'celtic-cross': celticCrossSpread
 };
 
@@ -95,14 +121,28 @@ export function drawCards(spreadType: SpreadType, question: string): ReadingResu
 		throw new Error(`Unknown spread type: ${spreadType}`);
 	}
 
+	const needsFeeling = spreadType !== 'single';
+	const totalCards = needsFeeling ? config.cardCount + 1 : config.cardCount;
 	const shuffled = secureShuffle(allCards);
-	const selected = shuffled.slice(0, config.cardCount);
+	const selected = shuffled.slice(0, totalCards);
 
-	const cards: DrawnCard[] = selected.map((card, i) => ({
+	const cards: DrawnCard[] = selected.slice(0, config.cardCount).map((card, i) => ({
 		card,
 		orientation: randomOrientation(),
 		position: config.positions[i]
 	}));
+
+	if (needsFeeling) {
+		cards.push({
+			card: selected[config.cardCount],
+			orientation: randomOrientation(),
+			position: {
+				index: config.cardCount,
+				label: '你的感受',
+				description: '你對此問題最真實的內心感受'
+			}
+		});
+	}
 
 	return {
 		spreadType,

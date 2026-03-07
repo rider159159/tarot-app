@@ -26,7 +26,9 @@
 	}
 
 	function getSpreadTypeForApi(spread: SpreadType): string {
-		if (spread === 'three-card') return 'ThreeCard';
+		if (spread === 'three-card-time') return 'ThreeCardTime';
+		if (spread === 'three-card-problem') return 'ThreeCardProblem';
+		if (spread === 'three-card-linear') return 'ThreeCardLinear';
 		if (spread === 'celtic-cross') return 'CelticCross';
 		return 'Single';
 	}

@@ -32,7 +32,10 @@ export function mapApiResponse(res: ApiReadingResponse): ReadingResult {
 
 const spreadNameMap: Record<string, string> = {
 	single: '單張牌',
-	'three-card': '三張牌',
+	'three-card': '三張牌 — 時間流',
+	'three-card-time': '三張牌 — 時間流',
+	'three-card-problem': '三張牌 — 問題對策',
+	'three-card-linear': '三張牌 — 線性展開',
 	'celtic-cross': '塞爾特十字'
 };
 

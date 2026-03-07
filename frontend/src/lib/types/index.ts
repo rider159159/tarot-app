@@ -13,7 +13,12 @@ export interface TarotCard {
 	keywords: string[];
 }
 
-export type SpreadType = 'single' | 'three-card' | 'celtic-cross';
+export type SpreadType =
+	| 'single'
+	| 'three-card-time'
+	| 'three-card-problem'
+	| 'three-card-linear'
+	| 'celtic-cross';
 
 export interface SpreadPosition {
 	index: number;
