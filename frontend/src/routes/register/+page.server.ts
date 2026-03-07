@@ -26,6 +26,6 @@ export const actions: Actions = {
 
 		if (error) return fail(error.status || 400, { error: error.message, email, displayName });
 
-		throw redirect(303, '/');
+		return { success: true };
 	}
 };

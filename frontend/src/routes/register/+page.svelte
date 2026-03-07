@@ -61,10 +61,12 @@
 					<span class="hint">密碼至少需要 8 個字元</span>
 				{/if}
 			</label>
-			{#if form?.error}
+			{#if form?.success}
+				<p class="success">註冊成功！請查收驗證信，點擊信中連結完成註冊。</p>
+			{:else if form?.error}
 				<p class="error">{form.error}</p>
 			{/if}
-			<button type="submit" disabled={submitting}>
+			<button type="submit" disabled={submitting || !!form?.success}>
 				{submitting ? '註冊中...' : '註冊'}
 			</button>
 		</form>
@@ -128,6 +130,16 @@
 	.hint {
 		color: #b08000;
 		font-size: 0.8rem;
+	}
+
+	.success {
+		color: #2d6a2d;
+		background: #e8f5e8;
+		border: 1px solid #a8d8a8;
+		border-radius: 6px;
+		padding: 0.75rem;
+		font-size: 0.875rem;
+		margin: 0;
 	}
 
 	.error {

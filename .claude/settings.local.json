@@ -58,7 +58,8 @@
       "Bash(curl -s https://rtarot-api.zeabur.app/api/health)",
       "WebFetch(domain:en.wikipedia.org)",
       "Bash(dotnet build)",
-      "Bash(ls -la /Users/ryder/Documents/Project/sideProject/tarot-app/frontend/src/hooks.*)"
+      "Bash(ls -la /Users/ryder/Documents/Project/sideProject/tarot-app/frontend/src/hooks.*)",
+      "Bash(python3 -c \":*)"
     ]
   }
 }
