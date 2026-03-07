@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { createServerApiClient } from '$lib/server/api';
+import { createServerApiClient, ApiError } from '$lib/server/api';
 import type { ApiProfileResponse, ApiReadingStatsResponse } from '$lib/types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -27,7 +27,9 @@ export const actions: Actions = {
 			const updated = await api.put<ApiProfileResponse>('/api/profile', { displayName });
 			return { success: true, profile: updated };
 		} catch (err) {
-			return fail(400, { error: err instanceof Error ? err.message : '儲存失敗，請稍後再試' });
+			const status = err instanceof ApiError ? err.status : 400;
+			const message = err instanceof Error ? err.message : '儲存失敗，請稍後再試';
+			return fail(status, { error: message });
 		}
 	}
 };

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using TarotApi.Data;
 using TarotApi.Models.Dtos;
 
+
 namespace TarotApi.Controllers;
 
 [ApiController]
@@ -28,7 +29,8 @@ public class TarotController : ControllerBase
     public ActionResult<TarotCardDetailDto> GetCardById(string id)
     {
         var card = TarotCards.GetById(id);
-        if (card is null) return NotFound();
+        if (card is null)
+            return NotFound(new ErrorResponseDto { Error = "找不到該塔羅牌", Code = "NOT_FOUND" });
 
         return Ok(new TarotCardDetailDto
         {

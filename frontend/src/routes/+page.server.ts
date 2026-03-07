@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
-import { createServerApiClient } from '$lib/server/api';
+import { createServerApiClient, ApiError } from '$lib/server/api';
 import type { ApiReadingResponse } from '$lib/types';
 
 export const actions: Actions = {
@@ -19,7 +19,9 @@ export const actions: Actions = {
 			});
 			return { reading: result };
 		} catch (err) {
-			return fail(400, { error: err instanceof Error ? err.message : '抽牌失敗，請稍後再試' });
+			const status = err instanceof ApiError ? err.status : 400;
+			const message = err instanceof Error ? err.message : '抽牌失敗，請稍後再試';
+			return fail(status, { error: message });
 		}
 	}
 };

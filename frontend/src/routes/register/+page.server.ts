@@ -24,7 +24,7 @@ export const actions: Actions = {
 			options: { data: { display_name: displayName } }
 		});
 
-		if (error) return fail(400, { error: error.message, email, displayName });
+		if (error) return fail(error.status || 400, { error: error.message, email, displayName });
 
 		throw redirect(303, '/');
 	}

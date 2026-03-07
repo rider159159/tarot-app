@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { createServerApiClient } from '$lib/server/api';
+import { createServerApiClient, ApiError } from '$lib/server/api';
 import type { ApiReadingsPage } from '$lib/types';
 
 const PAGE_SIZE = 10;
@@ -35,7 +35,9 @@ export const actions: Actions = {
 			await api.delete(`/api/readings/${id}`);
 			return { success: true };
 		} catch (err) {
-			return fail(400, { error: err instanceof Error ? err.message : '刪除失敗，請稍後再試' });
+			const status = err instanceof ApiError ? err.status : 400;
+			const message = err instanceof Error ? err.message : '刪除失敗，請稍後再試';
+			return fail(status, { error: message });
 		}
 	}
 };

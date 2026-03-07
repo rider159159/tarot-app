@@ -15,7 +15,8 @@ public class ProfileController(ProfileService profileService) : ControllerBase
         var userId = User.GetUserId();
         var profile = await profileService.GetProfile(userId);
 
-        if (profile is null) return NotFound();
+        if (profile is null)
+            return NotFound(new ErrorResponseDto { Error = "找不到使用者資料", Code = "NOT_FOUND" });
         return Ok(profile);
     }
 
@@ -25,7 +26,8 @@ public class ProfileController(ProfileService profileService) : ControllerBase
         var userId = User.GetUserId();
         var profile = await profileService.UpdateProfile(userId, dto.DisplayName);
 
-        if (profile is null) return NotFound();
+        if (profile is null)
+            return NotFound(new ErrorResponseDto { Error = "找不到使用者資料", Code = "NOT_FOUND" });
         return Ok(profile);
     }
 }

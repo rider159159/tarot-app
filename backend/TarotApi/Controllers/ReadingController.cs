@@ -5,6 +5,7 @@ using TarotApi.Services;
 
 namespace TarotApi.Controllers;
 
+
 [ApiController]
 [Route("api/readings")]
 public class ReadingController(ReadingService readingService) : ControllerBase
@@ -42,7 +43,8 @@ public class ReadingController(ReadingService readingService) : ControllerBase
         var userId = User.GetUserId();
         var result = await readingService.GetReadingById(userId, id);
 
-        if (result is null) return NotFound();
+        if (result is null)
+            return NotFound(new ErrorResponseDto { Error = "找不到該筆占卜紀錄", Code = "NOT_FOUND" });
         return Ok(result);
     }
 
@@ -60,7 +62,8 @@ public class ReadingController(ReadingService readingService) : ControllerBase
         var userId = User.GetUserId();
         var deleted = await readingService.DeleteReading(userId, id);
 
-        if (!deleted) return NotFound();
+        if (!deleted)
+            return NotFound(new ErrorResponseDto { Error = "找不到該筆占卜紀錄", Code = "NOT_FOUND" });
         return NoContent();
     }
 }

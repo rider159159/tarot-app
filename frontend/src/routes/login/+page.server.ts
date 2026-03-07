@@ -14,7 +14,7 @@ export const actions: Actions = {
 		const password = data.get('password') as string;
 
 		const { error } = await supabase.auth.signInWithPassword({ email, password });
-		if (error) return fail(400, { error: error.message, email });
+		if (error) return fail(error.status || 400, { error: error.message, email });
 
 		throw redirect(303, '/');
 	}

@@ -19,9 +19,13 @@ RUN pnpm build
 # ── Stage 2: Runtime ──────────────────────────────────────────────────────────
 FROM node:22-slim
 WORKDIR /app
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml* ./
+# --ignore-scripts 跳過 prepare (svelte-kit sync)，只裝 runtime deps
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 COPY --from=builder /app/build ./build
-COPY --from=builder /app/package.json ./package.json
 
 EXPOSE 3000
 ENV PORT=3000

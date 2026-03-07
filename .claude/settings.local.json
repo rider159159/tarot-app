@@ -52,7 +52,13 @@
       "Bash(docker compose -f /Users/ryder/Documents/Project/sideProject/tarot-app/docker-compose.yml exec backend ping -c 1 aws-1-ap-northeast-2.pooler.supabase.com)",
       "Bash(docker compose -f /Users/ryder/Documents/Project/sideProject/tarot-app/docker-compose.yml exec backend getent hosts aws-1-ap-northeast-2.pooler.supabase.com)",
       "Bash(docker compose -f /Users/ryder/Documents/Project/sideProject/tarot-app/docker-compose.yml exec backend printenv SUPABASE_DB_CONNECTION_STRING)",
-      "WebFetch(domain:zeabur.com)"
+      "WebFetch(domain:zeabur.com)",
+      "Bash(grep -n \"Route\\\\|HttpGet\\\\|HttpPost\\\\|HttpPut\\\\|HttpDelete\\\\|HttpPatch\" /Users/ryder/Documents/Project/sideProject/tarot-app/backend/TarotApi/Controllers/*.cs)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://rtarot-api.zeabur.app/api/health)",
+      "Bash(curl -s https://rtarot-api.zeabur.app/api/health)",
+      "WebFetch(domain:en.wikipedia.org)",
+      "Bash(dotnet build)",
+      "Bash(ls -la /Users/ryder/Documents/Project/sideProject/tarot-app/frontend/src/hooks.*)"
     ]
   }
 }
