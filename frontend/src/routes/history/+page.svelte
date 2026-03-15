@@ -274,7 +274,34 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		margin-bottom: 0.25rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.card-body {
+		display: flex;
+		gap: 1rem;
+		align-items: flex-start;
+	}
+
+	.card-image {
+		flex-shrink: 0;
+		width: 90px;
+	}
+
+	.card-image.reversed {
+		transform: rotate(180deg);
+	}
+
+	.card-image img {
+		width: 100%;
+		height: auto;
+		border-radius: 4px;
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+	}
+
+	.card-info {
+		flex: 1;
+		min-width: 0;
 	}
 
 	.orientation {
