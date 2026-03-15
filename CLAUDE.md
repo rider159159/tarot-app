@@ -169,6 +169,13 @@ Swagger UI available at `/swagger` in Development environment only.
 
 Non-single spreads include an extra "feeling card" for additional context.
 
+## Custom Commands
+
+| Command | Description |
+|---------|-------------|
+| `/pm` | 產品經理審查 — 檢查未提交變更的完整性（前後端型別一致性、API 合約、UI 狀態、認證、DB 遷移、牌陣邏輯、部署影響、文件更新） |
+| `/pm <說明>` | 帶上下文的聚焦審查（如 `/pm 新增了 weekly-fortune 牌陣`） |
+
 ## Common Debug Tips
 
 ### Backend won't start

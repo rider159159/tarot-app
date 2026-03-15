@@ -1,19 +1,32 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
-	import { getSpreadName, formatDate } from '$lib/utils/reading';
+	import { getSpreadName, formatDate, mapApiResponse } from '$lib/utils/reading';
 	import type { PageData, ActionData } from './$types';
+	import ReadingDisplay from '$lib/components/ReadingDisplay.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let editing: boolean = $state(false);
 	let editName: string = $state('');
 	let saving: boolean = $state(false);
+	let drawingWeekly: boolean = $state(false);
 
 	let email = $derived($page.data.user?.email ?? '');
 
 	// Reflect successful name update into local state
 	let displayName = $derived(form?.profile?.displayName ?? data.profile.displayName);
+
+	// Weekly fortune: prefer action result over load data
+	let formAny = $derived(form as Record<string, any> | null);
+	let weeklyReading = $derived(
+		formAny?.weeklyReading
+			? mapApiResponse(formAny.weeklyReading)
+			: data.weeklyFortune.reading
+				? mapApiResponse(data.weeklyFortune.reading)
+				: null
+	);
+	let canDrawWeekly = $derived(formAny?.weeklyReading ? false : data.weeklyFortune.canDraw);
 
 	function startEdit() {
 		editName = displayName;
@@ -79,6 +92,35 @@
 		</div>
 		{#if form?.error}
 			<p class="error">{form.error}</p>
+		{/if}
+	</section>
+
+	<section class="weekly-section">
+		<h2>每週週運</h2>
+		{#if weeklyReading}
+			<ReadingDisplay reading={weeklyReading} />
+		{:else if canDrawWeekly}
+			<p class="weekly-hint">抽出三張塔羅牌，看看本週的能量、挑戰與建議</p>
+			<form
+				method="POST"
+				action="?/drawWeekly"
+				use:enhance={() => {
+					drawingWeekly = true;
+					return async ({ update }) => {
+						drawingWeekly = false;
+						await update();
+					};
+				}}
+			>
+				<button type="submit" class="draw-weekly-btn" disabled={drawingWeekly}>
+					{drawingWeekly ? '抽牌中...' : '抽取本週週運'}
+				</button>
+			</form>
+		{:else}
+			<p class="weekly-done">本週已抽過週運，下週一可再次抽取</p>
+		{/if}
+		{#if formAny?.weeklyError}
+			<p class="error">{formAny.weeklyError}</p>
 		{/if}
 	</section>
 
@@ -255,6 +297,48 @@
 	.cancel-btn:hover:not(:disabled) {
 		border-color: #333;
 		color: #333;
+	}
+
+	.weekly-section {
+		background: linear-gradient(135deg, #f8f4fc 0%, #efe8f5 100%);
+		border-color: #d0c0e0;
+	}
+
+	.weekly-hint {
+		text-align: center;
+		color: #666;
+		font-size: 0.9rem;
+		margin: 0 0 1rem;
+	}
+
+	.draw-weekly-btn {
+		display: block;
+		width: 100%;
+		padding: 0.75rem;
+		background: #4a3060;
+		border: none;
+		border-radius: 8px;
+		color: #fff;
+		font-size: 1rem;
+		cursor: pointer;
+		font-family: inherit;
+		transition: background 0.2s;
+	}
+
+	.draw-weekly-btn:hover:not(:disabled) {
+		background: #3a2050;
+	}
+
+	.draw-weekly-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.weekly-done {
+		text-align: center;
+		color: #7a5a90;
+		font-size: 0.9rem;
+		margin: 0;
 	}
 
 	.stat-card {

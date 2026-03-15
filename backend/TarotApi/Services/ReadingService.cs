@@ -121,6 +121,40 @@ public class ReadingService(TarotDbContext db, TarotService tarotService)
         };
     }
 
+    public async Task<ReadingResponseDto?> GetWeeklyFortune(Guid userId)
+    {
+        var weekStart = GetCurrentWeekStart();
+        var reading = await db.Readings
+            .Where(r => r.UserId == userId
+                        && r.SpreadType == "weekly-fortune"
+                        && r.CreatedAt >= weekStart)
+            .OrderByDescending(r => r.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        return reading is null ? null : ToResponseDto(reading, ResolveCards(reading));
+    }
+
+    public async Task<ReadingResponseDto> CreateWeeklyFortune(Guid userId)
+    {
+        var weekStart = GetCurrentWeekStart();
+        var exists = await db.Readings
+            .AnyAsync(r => r.UserId == userId
+                           && r.SpreadType == "weekly-fortune"
+                           && r.CreatedAt >= weekStart);
+
+        if (exists)
+            throw new InvalidOperationException("本週已經抽過週運了，請下週再來");
+
+        return await CreateReading(userId, SpreadType.WeeklyFortune, "本週週運");
+    }
+
+    private static DateTime GetCurrentWeekStart()
+    {
+        var now = DateTime.UtcNow;
+        var diff = (7 + (now.DayOfWeek - DayOfWeek.Monday)) % 7;
+        return now.AddDays(-diff).Date;
+    }
+
     // --- Helpers ---
 
     // Raw SQL result type for card stats query
@@ -137,6 +171,7 @@ public class ReadingService(TarotDbContext db, TarotService tarotService)
         SpreadType.ThreeCardProblem => "three-card-problem",
         SpreadType.ThreeCardLinear => "three-card-linear",
         SpreadType.CelticCross => "celtic-cross",
+        SpreadType.WeeklyFortune => "weekly-fortune",
         _ => throw new ArgumentOutOfRangeException(nameof(type))
     };
 
@@ -162,6 +197,7 @@ public class ReadingService(TarotDbContext db, TarotService tarotService)
                 "three-card-problem" => SpreadType.ThreeCardProblem,
                 "three-card-linear" => SpreadType.ThreeCardLinear,
                 "celtic-cross" => SpreadType.CelticCross,
+                "weekly-fortune" => SpreadType.WeeklyFortune,
                 _ => SpreadType.Single
             };
 

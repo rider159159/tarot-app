@@ -72,12 +72,25 @@ const celticCrossSpread: SpreadConfig = {
 	]
 };
 
+const weeklyFortuneSpread: SpreadConfig = {
+	type: 'weekly-fortune',
+	name: '每週週運',
+	description: '抽取三張牌，看看本週的能量、挑戰與建議。',
+	cardCount: 3,
+	positions: [
+		{ index: 0, label: '本週能量', description: '這週圍繞你的整體能量與氛圍' },
+		{ index: 1, label: '本週挑戰', description: '這週可能面臨的挑戰或需要注意的事項' },
+		{ index: 2, label: '本週建議', description: '面對本週的指引與建議' }
+	]
+};
+
 export const spreadConfigs: Record<SpreadType, SpreadConfig> = {
 	single: singleSpread,
 	'three-card-time': threeCardTimeSpread,
 	'three-card-problem': threeCardProblemSpread,
 	'three-card-linear': threeCardLinearSpread,
-	'celtic-cross': celticCrossSpread
+	'celtic-cross': celticCrossSpread,
+	'weekly-fortune': weeklyFortuneSpread
 };
 
 // === Crypto-based Random Utilities ===

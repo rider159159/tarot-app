@@ -56,6 +56,29 @@ public class ReadingController(ReadingService readingService) : ControllerBase
         return Ok(stats);
     }
 
+    [HttpGet("weekly-fortune")]
+    public async Task<ActionResult> GetWeeklyFortune()
+    {
+        var userId = User.GetUserId();
+        var result = await readingService.GetWeeklyFortune(userId);
+        return Ok(new { reading = result, canDraw = result is null });
+    }
+
+    [HttpPost("weekly-fortune")]
+    public async Task<ActionResult<ReadingResponseDto>> CreateWeeklyFortune()
+    {
+        var userId = User.GetUserId();
+        try
+        {
+            var result = await readingService.CreateWeeklyFortune(userId);
+            return Created($"/api/readings/{result.Id}", result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new ErrorResponseDto { Error = ex.Message, Code = "WEEKLY_LIMIT" });
+        }
+    }
+
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult> DeleteReading(Guid id)
     {

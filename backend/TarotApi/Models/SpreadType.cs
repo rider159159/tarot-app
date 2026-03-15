@@ -9,5 +9,6 @@ public enum SpreadType
     ThreeCardTime,
     ThreeCardProblem,
     ThreeCardLinear,
-    CelticCross
+    CelticCross,
+    WeeklyFortune
 }

@@ -18,7 +18,8 @@ export type SpreadType =
 	| 'three-card-time'
 	| 'three-card-problem'
 	| 'three-card-linear'
-	| 'celtic-cross';
+	| 'celtic-cross'
+	| 'weekly-fortune';
 
 export interface SpreadPosition {
 	index: number;
@@ -117,6 +118,13 @@ export interface ApiProfileResponse {
 
 export interface ApiProfileUpdateRequest {
 	displayName: string;
+}
+
+// === Weekly Fortune API Types ===
+
+export interface ApiWeeklyFortuneResponse {
+	reading: ApiReadingResponse | null;
+	canDraw: boolean;
 }
 
 // === Stats API Types ===
