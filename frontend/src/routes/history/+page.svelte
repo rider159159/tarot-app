@@ -63,19 +63,30 @@
 					{#if expandedId === reading.id}
 						<div class="reading-detail">
 							{#each reading.cards as card}
+								{@const imageUrl = getCardImageUrl(card.cardId)}
+								{@const isReversed = card.orientation === 'reversed'}
 								<div class="card-detail">
 									<div class="card-header">
 										<strong>{card.positionLabel}</strong>
-										<span class="orientation" class:reversed={card.orientation === 'reversed'}>
-											{card.orientation === 'upright' ? '正位' : '逆位'}
+										<span class="orientation" class:reversed={isReversed}>
+											{isReversed ? '逆位' : '正位'}
 										</span>
 									</div>
-									<p class="card-name">{card.nameCht} <em>{card.name}</em></p>
-									<p class="card-meaning">{card.meaning}</p>
-									<div class="keywords">
-										{#each card.keywords as kw}
-											<span class="keyword">{kw}</span>
-										{/each}
+									<div class="card-body">
+										{#if imageUrl}
+											<div class="card-image" class:reversed={isReversed}>
+												<img src={imageUrl} alt={card.nameCht} loading="lazy" />
+											</div>
+										{/if}
+										<div class="card-info">
+											<p class="card-name">{card.nameCht} <em>{card.name}</em></p>
+											<p class="card-meaning">{card.meaning}</p>
+											<div class="keywords">
+												{#each card.keywords as kw}
+													<span class="keyword">{kw}</span>
+												{/each}
+											</div>
+										</div>
 									</div>
 								</div>
 							{/each}
