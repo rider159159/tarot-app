@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import type { ApiReadingResponse } from '$lib/types';
 	import { getSpreadName, formatDate } from '$lib/utils/reading';
+	import { getCardImageUrl } from '$lib/tarot';
 	import type { PageData, ActionData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
