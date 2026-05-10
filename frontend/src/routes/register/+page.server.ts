@@ -14,6 +14,14 @@ export const actions: Actions = {
 		const password = data.get('password') as string;
 		const displayName = data.get('display_name') as string;
 
+		if (!displayName || displayName.trim().length === 0) {
+			return fail(400, { error: '請輸入顯示名稱', email, displayName });
+		}
+
+		if (displayName.trim().length > 50) {
+			return fail(400, { error: '顯示名稱不能超過 50 個字元', email, displayName });
+		}
+
 		if (password.length < 8) {
 			return fail(400, { error: '密碼至少需要 8 個字元', email, displayName });
 		}
@@ -21,10 +29,16 @@ export const actions: Actions = {
 		const { error } = await supabase.auth.signUp({
 			email,
 			password,
-			options: { data: { display_name: displayName } }
+			options: { data: { display_name: displayName.trim() } }
 		});
 
-		if (error) return fail(error.status || 400, { error: error.message, email, displayName });
+		if (error) {
+			let message = error.message;
+			if (error.message.toLowerCase().includes('already registered') || error.message.toLowerCase().includes('already been registered')) {
+				message = '此信箱已被註冊，請直接登入';
+			}
+			return fail(error.status || 400, { error: message, email, displayName });
+		}
 
 		return { success: true };
 	}

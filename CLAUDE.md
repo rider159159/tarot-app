@@ -125,6 +125,23 @@ Swagger UI available at `/swagger` in Development environment only.
 - `SUPABASE_JWT_SECRET` is loaded but JWKS is the actual signing key source
 - Global `[Authorize]` filter on all controllers; `[AllowAnonymous]` on health only
 
+### Test account (for AI / smoke tests)
+There's a pre-created Supabase user for hitting auth-required endpoints without registering each time. Email is committed in `.env.example`; password lives in local `.env` only (gitignored). Email is already confirmed, so password grant works directly.
+
+When you (Claude) need a Bearer token to call `/api/readings`, `/api/profile`, etc., source `.env` and exchange the test credentials for an `access_token`:
+
+```bash
+set -a && source .env && set +a
+TOKEN=$(curl -s -X POST "$PUBLIC_SUPABASE_URL/auth/v1/token?grant_type=password" \
+  -H "apikey: $PUBLIC_SUPABASE_ANON_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"$TEST_USER_EMAIL\",\"password\":\"$TEST_USER_PASSWORD\"}" | jq -r .access_token)
+
+curl -H "Authorization: Bearer $TOKEN" http://localhost:5098/api/profile
+```
+
+If `TEST_USER_PASSWORD` is missing locally, ask the user — don't try to register a new account or reset the password.
+
 ## Key Source Files
 
 ### Backend

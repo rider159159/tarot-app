@@ -24,7 +24,12 @@
 			{/each}
 		</ul>
 		{#if displayName}
-			<span class="user-name">{displayName}</span>
+			<div class="user-area">
+				<span class="user-name">{displayName}</span>
+				<form method="POST" action="/auth/logout">
+					<button type="submit" class="logout-btn">登出</button>
+				</form>
+			</div>
 		{/if}
 	</div>
 </nav>
@@ -72,8 +77,31 @@
 		background: rgba(255, 255, 255, 0.15);
 	}
 
+	.user-area {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
 	.user-name {
 		color: rgba(255, 255, 255, 0.8);
 		font-size: 0.85rem;
+	}
+
+	.logout-btn {
+		background: none;
+		border: 1px solid rgba(255, 255, 255, 0.3);
+		color: rgba(255, 255, 255, 0.75);
+		font-size: 0.8rem;
+		padding: 0.25rem 0.6rem;
+		border-radius: 4px;
+		cursor: pointer;
+		font-family: inherit;
+		transition: background 0.15s, color 0.15s;
+	}
+
+	.logout-btn:hover {
+		background: rgba(255, 255, 255, 0.1);
+		color: #fff;
 	}
 </style>
