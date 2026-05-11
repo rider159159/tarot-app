@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
 	import { getSpreadName, formatDate, mapApiResponse } from '$lib/utils/reading';
+	import { copyJsonToClipboard, type CopyStatus } from '$lib/utils/clipboard';
 	import type { PageData, ActionData } from './$types';
 	import ReadingDisplay from '$lib/components/ReadingDisplay.svelte';
 
@@ -11,6 +12,7 @@
 	let editName: string = $state('');
 	let saving: boolean = $state(false);
 	let drawingWeekly: boolean = $state(false);
+	let copyStatus: CopyStatus = $state('idle');
 
 	let email = $derived($page.data.user?.email ?? '');
 
@@ -36,6 +38,18 @@
 	function cancelEdit() {
 		editing = false;
 	}
+
+	$effect(() => {
+		if (formAny?.exportSuccess && formAny.exportJson && formAny.exportedId) {
+			copyStatus = 'copying';
+			copyJsonToClipboard(formAny.exportJson).then((ok) => {
+				copyStatus = ok ? 'done' : 'error';
+				setTimeout(() => {
+					copyStatus = 'idle';
+				}, ok ? 2000 : 3000);
+			});
+		}
+	});
 </script>
 
 <svelte:head>
@@ -99,6 +113,24 @@
 		<h2>每週週運</h2>
 		{#if weeklyReading}
 			<ReadingDisplay reading={weeklyReading} />
+			{#if weeklyReading.id}
+				<form method="POST" action="?/exportSingle" use:enhance class="export-form">
+					<input type="hidden" name="id" value={weeklyReading.id} />
+					<button
+						type="submit"
+						class="export-btn"
+						disabled={copyStatus === 'copying'}
+					>
+						{#if copyStatus === 'done'}✓ 已複製
+						{:else if copyStatus === 'error'}✗ 複製失敗
+						{:else if copyStatus === 'copying'}複製中...
+						{:else}複製給 AI{/if}
+					</button>
+				</form>
+			{/if}
+			{#if formAny?.exportError}
+				<p class="error">{formAny.exportError}</p>
+			{/if}
 		{:else if canDrawWeekly}
 			<p class="weekly-hint">抽出三張塔羅牌，看看本週的能量、挑戰與建議</p>
 			<form
@@ -339,6 +371,32 @@
 		color: #7a5a90;
 		font-size: 0.9rem;
 		margin: 0;
+	}
+
+	.export-form {
+		text-align: center;
+		margin-top: 1rem;
+	}
+
+	.export-btn {
+		padding: 0.45rem 1rem;
+		background: none;
+		border: 1px solid #7a5a90;
+		border-radius: 6px;
+		color: #7a5a90;
+		font-size: 0.85rem;
+		cursor: pointer;
+		font-family: inherit;
+	}
+
+	.export-btn:hover:not(:disabled) {
+		background: #7a5a90;
+		color: #fff;
+	}
+
+	.export-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 
 	.stat-card {

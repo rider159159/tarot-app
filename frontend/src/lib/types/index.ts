@@ -146,3 +146,43 @@ export interface ApiReadingStatsResponse {
 	spreadUsage: ApiSpreadStat[];
 	lastReadingAt: string | null;
 }
+
+// === Export API Types ===
+
+export interface ApiExportCard {
+	position: string;
+	name: string;
+	nameEn: string;
+	orientation: string;
+	keywords: string[];
+	meaning: string;
+}
+
+export interface ApiExportReading {
+	id: string;
+	drawnAt: string;
+	spreadType: string;
+	spreadTypeKey: string;
+	question: string | null;
+	cards: ApiExportCard[];
+}
+
+export interface ApiExportMetadata {
+	exportedAt: string;
+	source: string;
+	formatVersion: string;
+}
+
+export interface ApiExportPayload {
+	metadata: ApiExportMetadata;
+	reading: ApiExportReading;
+	aiPromptSuggestion: string;
+}
+
+export interface ApiExportBatch {
+	metadata: ApiExportMetadata;
+	totalCount: number;
+	exportedCount: number;
+	isTruncated: boolean;
+	readings: ApiExportReading[];
+}

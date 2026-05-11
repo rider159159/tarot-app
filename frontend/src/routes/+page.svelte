@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import type { SpreadType, ReadingResult } from '$lib/types';
 	import { mapApiResponse } from '$lib/utils/reading';
+	import { copyJsonToClipboard, type CopyStatus } from '$lib/utils/clipboard';
 	import SpreadSelector from '$lib/components/SpreadSelector.svelte';
 	import QuestionInput from '$lib/components/QuestionInput.svelte';
 	import DrawButton from '$lib/components/DrawButton.svelte';
@@ -14,6 +15,7 @@
 	let question: string = $state('');
 	let loading: boolean = $state(false);
 	let reading: ReadingResult | null = $state(null);
+	let copyStatus: CopyStatus = $state('idle');
 
 	$effect(() => {
 		if (form?.reading) {
@@ -21,8 +23,21 @@
 		}
 	});
 
+	$effect(() => {
+		if (form?.exportSuccess && form.exportJson && form.exportedId) {
+			copyStatus = 'copying';
+			copyJsonToClipboard(form.exportJson).then((ok) => {
+				copyStatus = ok ? 'done' : 'error';
+				setTimeout(() => {
+					copyStatus = 'idle';
+				}, ok ? 2000 : 3000);
+			});
+		}
+	});
+
 	function handleDrawAgain() {
 		reading = null;
+		copyStatus = 'idle';
 	}
 
 	function getSpreadTypeForApi(spread: SpreadType): string {
@@ -68,8 +83,26 @@
 		<ReadingDisplay {reading} />
 		<div class="actions">
 			<button class="action-btn" onclick={handleDrawAgain}>再抽一次</button>
+			{#if reading.id}
+				<form method="POST" action="?/exportSingle" use:enhance>
+					<input type="hidden" name="id" value={reading.id} />
+					<button
+						type="submit"
+						class="action-btn secondary"
+						disabled={copyStatus === 'copying'}
+					>
+						{#if copyStatus === 'done'}✓ 已複製
+						{:else if copyStatus === 'error'}✗ 複製失敗
+						{:else if copyStatus === 'copying'}複製中...
+						{:else}複製給 AI{/if}
+					</button>
+				</form>
+			{/if}
 			<a href="/history" class="action-btn secondary">查看歷史</a>
 		</div>
+		{#if form?.exportError}
+			<p class="error">{form.exportError}</p>
+		{/if}
 	{/if}
 </main>
 

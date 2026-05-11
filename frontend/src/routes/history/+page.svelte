@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import type { ApiReadingResponse } from '$lib/types';
 	import { getSpreadName, formatDate } from '$lib/utils/reading';
+	import { copyJsonToClipboard, downloadJson, type CopyStatus } from '$lib/utils/clipboard';
 	import { getCardImageUrl } from '$lib/tarot';
 	import type { PageData, ActionData } from './$types';
 
@@ -10,8 +11,11 @@
 
 	let expandedId: string | null = $state(null);
 	let deletingId: string | null = $state(null);
+	let copyStatus: Record<string, CopyStatus> = $state({});
+	let batchDownloading: boolean = $state(false);
 
 	let totalPages = $derived(Math.ceil(data.totalCount / data.pageSize));
+	let formAny = $derived(form as Record<string, any> | null);
 
 	function toggleExpand(id: string) {
 		expandedId = expandedId === id ? null : id;
@@ -20,6 +24,28 @@
 	function goToPage(page: number) {
 		goto(`?page=${page}`, { keepFocus: true });
 	}
+
+	// 單筆匯出：寫剪貼簿
+	$effect(() => {
+		if (formAny?.exportSuccess && formAny.exportJson && formAny.exportedId) {
+			const id = formAny.exportedId as string;
+			copyStatus[id] = 'copying';
+			copyJsonToClipboard(formAny.exportJson).then((ok) => {
+				copyStatus[id] = ok ? 'done' : 'error';
+				setTimeout(() => {
+					copyStatus[id] = 'idle';
+				}, ok ? 2000 : 3000);
+			});
+		}
+	});
+
+	// 批次匯出：觸發下載
+	$effect(() => {
+		if (formAny?.exportSuccess && formAny.exportJson && !formAny.exportedId) {
+			const today = new Date().toISOString().slice(0, 10);
+			downloadJson(formAny.exportJson, `tarot-readings-${today}.json`);
+		}
+	});
 </script>
 
 <svelte:head>
@@ -29,8 +55,42 @@
 <main>
 	<h1>歷史紀錄</h1>
 
+	{#if data.readings.length > 0}
+		<section class="batch-export">
+			<p class="batch-hint">將你所有的抽牌紀錄匯出成 JSON 檔案，可用於備份或貼給 AI 進行批次解讀。</p>
+			<form
+				method="POST"
+				action="?/exportAll"
+				use:enhance={() => {
+					batchDownloading = true;
+					return async ({ update }) => {
+						await update();
+						setTimeout(() => {
+							batchDownloading = false;
+						}, 800);
+					};
+				}}
+			>
+				<button type="submit" class="batch-btn" disabled={batchDownloading}>
+					{batchDownloading ? '下載中...' : '匯出全部資料'}
+				</button>
+			</form>
+			{#if formAny?.exportSuccess && !formAny?.exportedId}
+				<p class="success">
+					已下載 {formAny.exportedCount} 筆紀錄
+					{#if formAny.isTruncated}
+						（共 {formAny.totalCount} 筆，僅匯出最近 1000 筆）
+					{/if}
+				</p>
+			{/if}
+		</section>
+	{/if}
+
 	{#if form?.error}
 		<p class="error">{form.error}</p>
+	{/if}
+	{#if formAny?.exportError}
+		<p class="error">{formAny.exportError}</p>
 	{/if}
 
 	{#if data.readings.length === 0}
@@ -90,31 +150,46 @@
 									</div>
 								</div>
 							{/each}
-							<form
-								method="POST"
-								action="?/delete"
-								use:enhance={({ cancel }) => {
-									if (!confirm('確定要刪除這筆抽牌紀錄嗎？')) {
-										cancel();
-										return;
-									}
-									deletingId = reading.id;
-									return async ({ update }) => {
-										deletingId = null;
-										expandedId = null;
-										await update();
-									};
-								}}
-							>
-								<input type="hidden" name="id" value={reading.id} />
-								<button
-									type="submit"
-									class="delete-btn"
-									disabled={deletingId === reading.id}
+							<div class="detail-actions">
+								<form method="POST" action="?/exportSingle" use:enhance>
+									<input type="hidden" name="id" value={reading.id} />
+									<button
+										type="submit"
+										class="export-btn"
+										disabled={copyStatus[reading.id] === 'copying'}
+									>
+										{#if copyStatus[reading.id] === 'done'}✓ 已複製
+										{:else if copyStatus[reading.id] === 'error'}✗ 複製失敗
+										{:else if copyStatus[reading.id] === 'copying'}複製中...
+										{:else}複製給 AI{/if}
+									</button>
+								</form>
+								<form
+									method="POST"
+									action="?/delete"
+									use:enhance={({ cancel }) => {
+										if (!confirm('確定要刪除這筆抽牌紀錄嗎？')) {
+											cancel();
+											return;
+										}
+										deletingId = reading.id;
+										return async ({ update }) => {
+											deletingId = null;
+											expandedId = null;
+											await update();
+										};
+									}}
 								>
-									{deletingId === reading.id ? '刪除中...' : '刪除此紀錄'}
-								</button>
-							</form>
+									<input type="hidden" name="id" value={reading.id} />
+									<button
+										type="submit"
+										class="delete-btn"
+										disabled={deletingId === reading.id}
+									>
+										{deletingId === reading.id ? '刪除中...' : '刪除此紀錄'}
+									</button>
+								</form>
+							</div>
 						</div>
 					{/if}
 				</article>
@@ -345,8 +420,14 @@
 		border-radius: 10px;
 	}
 
-	.delete-btn {
+	.detail-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
 		margin-top: 1rem;
+	}
+
+	.delete-btn {
 		padding: 0.375rem 0.75rem;
 		background: none;
 		border: 1px solid #a03030;
@@ -365,6 +446,68 @@
 	.delete-btn:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+
+	.export-btn {
+		padding: 0.375rem 0.75rem;
+		background: none;
+		border: 1px solid #4a3060;
+		border-radius: 6px;
+		color: #4a3060;
+		font-size: 0.8rem;
+		cursor: pointer;
+		font-family: inherit;
+	}
+
+	.export-btn:hover:not(:disabled) {
+		background: #4a3060;
+		color: #fff;
+	}
+
+	.export-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.batch-export {
+		border: 1px solid #d0c0e0;
+		background: #faf8fc;
+		border-radius: 8px;
+		padding: 1rem;
+		margin-bottom: 1.25rem;
+		text-align: center;
+	}
+
+	.batch-hint {
+		font-size: 0.85rem;
+		color: #666;
+		margin: 0 0 0.75rem;
+	}
+
+	.batch-btn {
+		padding: 0.5rem 1.25rem;
+		background: #4a3060;
+		border: none;
+		border-radius: 6px;
+		color: #fff;
+		font-size: 0.9rem;
+		cursor: pointer;
+		font-family: inherit;
+	}
+
+	.batch-btn:hover:not(:disabled) {
+		background: #3a2050;
+	}
+
+	.batch-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.success {
+		color: #2a7a2a;
+		font-size: 0.85rem;
+		margin: 0.5rem 0 0;
 	}
 
 	.pagination {

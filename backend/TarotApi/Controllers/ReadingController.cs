@@ -8,7 +8,9 @@ namespace TarotApi.Controllers;
 
 [ApiController]
 [Route("api/readings")]
-public class ReadingController(ReadingService readingService) : ControllerBase
+public class ReadingController(
+    ReadingService readingService,
+    PromptBuilder promptBuilder) : ControllerBase
 {
     [HttpPost]
     public async Task<ActionResult<ReadingResponseDto>> CreateReading([FromBody] ReadingCreateDto dto)
@@ -77,6 +79,25 @@ public class ReadingController(ReadingService readingService) : ControllerBase
         {
             return Conflict(new ErrorResponseDto { Error = ex.Message, Code = "WEEKLY_LIMIT" });
         }
+    }
+
+    [HttpGet("export")]
+    public async Task<ActionResult<ExportBatchDto>> ExportAll()
+    {
+        const int hardLimit = 1000;
+        var userId = User.GetUserId();
+        var (items, totalCount, isTruncated) = await readingService.GetReadingsForExport(userId, hardLimit);
+        return Ok(promptBuilder.BuildBatchExport(items, totalCount, isTruncated));
+    }
+
+    [HttpGet("{id:guid}/export")]
+    public async Task<ActionResult<ExportPayloadDto>> ExportSingle(Guid id)
+    {
+        var userId = User.GetUserId();
+        var reading = await readingService.GetRawReadingById(userId, id);
+        if (reading is null)
+            return NotFound(new ErrorResponseDto { Error = "找不到該筆占卜紀錄", Code = "NOT_FOUND" });
+        return Ok(promptBuilder.BuildSingleExport(reading));
     }
 
     [HttpDelete("{id:guid}")]

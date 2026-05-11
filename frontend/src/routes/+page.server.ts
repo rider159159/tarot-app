@@ -1,6 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { createServerApiClient, ApiError } from '$lib/server/api';
+import { fetchSingleExport } from '$lib/server/export';
 import type { ApiReadingResponse } from '$lib/types';
 
 export const actions: Actions = {
@@ -23,5 +24,12 @@ export const actions: Actions = {
 			const message = err instanceof Error ? err.message : '抽牌失敗，請稍後再試';
 			return fail(status, { error: message });
 		}
+	},
+
+	exportSingle: async ({ request, locals }) => {
+		const { session } = await locals.safeGetSession();
+		const id = (await request.formData()).get('id')?.toString();
+		if (!id) return fail(400, { exportError: '缺少 reading id' });
+		return fetchSingleExport(session, id);
 	}
 };

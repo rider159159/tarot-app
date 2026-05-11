@@ -1,6 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { createServerApiClient, ApiError } from '$lib/server/api';
+import { fetchSingleExport, fetchBatchExport } from '$lib/server/export';
 import type { ApiReadingsPage } from '$lib/types';
 
 const PAGE_SIZE = 10;
@@ -39,5 +40,17 @@ export const actions: Actions = {
 			const message = err instanceof Error ? err.message : '刪除失敗，請稍後再試';
 			return fail(status, { error: message });
 		}
+	},
+
+	exportSingle: async ({ request, locals }) => {
+		const { session } = await locals.safeGetSession();
+		const id = (await request.formData()).get('id')?.toString();
+		if (!id) return fail(400, { exportError: '缺少 reading id' });
+		return fetchSingleExport(session, id);
+	},
+
+	exportAll: async ({ locals }) => {
+		const { session } = await locals.safeGetSession();
+		return fetchBatchExport(session);
 	}
 };

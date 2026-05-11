@@ -61,6 +61,23 @@ public class ReadingService(TarotDbContext db, TarotService tarotService)
         return reading is null ? null : ToResponseDto(reading, ResolveCards(reading));
     }
 
+    public async Task<Reading?> GetRawReadingById(Guid userId, Guid readingId)
+    {
+        return await db.Readings
+            .FirstOrDefaultAsync(r => r.Id == readingId && r.UserId == userId);
+    }
+
+    public async Task<(List<Reading> Items, int TotalCount, bool IsTruncated)> GetReadingsForExport(Guid userId, int hardLimit)
+    {
+        var query = db.Readings.Where(r => r.UserId == userId);
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(r => r.CreatedAt)
+            .Take(hardLimit)
+            .ToListAsync();
+        return (items, totalCount, totalCount > hardLimit);
+    }
+
     public async Task<bool> DeleteReading(Guid userId, Guid readingId)
     {
         var reading = await db.Readings
