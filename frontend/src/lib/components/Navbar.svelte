@@ -5,11 +5,17 @@
 	let user = $derived($page.data.user);
 	let displayName = $derived(user?.user_metadata?.display_name ?? user?.email ?? '');
 
-	const navItems = [
-		{ href: '/', label: '抽牌' },
-		{ href: '/history', label: '歷史紀錄' },
-		{ href: '/profile', label: '個人頁面' }
-	];
+	// Anonymous users only see the draw page link.
+	// Logged-in users get the full nav.
+	let navItems = $derived(
+		user
+			? [
+					{ href: '/', label: '抽牌' },
+					{ href: '/history', label: '歷史紀錄' },
+					{ href: '/profile', label: '個人頁面' }
+			  ]
+			: [{ href: '/', label: '抽牌' }]
+	);
 </script>
 
 <nav>
@@ -29,6 +35,11 @@
 				<form method="POST" action="/auth/logout">
 					<button type="submit" class="logout-btn">登出</button>
 				</form>
+			</div>
+		{:else}
+			<div class="user-area">
+				<a class="auth-link" href="/login">登入</a>
+				<a class="auth-link primary" href="/register">註冊</a>
 			</div>
 		{/if}
 	</div>
@@ -103,5 +114,24 @@
 	.logout-btn:hover {
 		background: rgba(255, 255, 255, 0.1);
 		color: #fff;
+	}
+
+	.auth-link {
+		color: rgba(255, 255, 255, 0.85);
+		text-decoration: none;
+		font-size: 0.85rem;
+		padding: 0.3rem 0.7rem;
+		border-radius: 4px;
+		border: 1px solid rgba(255, 255, 255, 0.3);
+		transition: background 0.15s, color 0.15s;
+	}
+
+	.auth-link:hover {
+		background: rgba(255, 255, 255, 0.1);
+		color: #fff;
+	}
+
+	.auth-link.primary {
+		background: rgba(255, 255, 255, 0.15);
 	}
 </style>

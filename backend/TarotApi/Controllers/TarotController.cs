@@ -1,15 +1,20 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using TarotApi.Data;
 using TarotApi.Models.Dtos;
-
+using TarotApi.Services;
 
 namespace TarotApi.Controllers;
 
 [ApiController]
 [Route("api/tarot")]
-public class TarotController : ControllerBase
+public class TarotController(ReadingService readingService) : ControllerBase
 {
+    // Public card catalog — useful both for the draw page (anonymous) and
+    // for any future card browser. Cheap, static, no auth needed.
     [HttpGet("cards")]
+    [AllowAnonymous]
     public ActionResult<List<TarotCardSummaryDto>> GetAllCards()
     {
         var cards = TarotCards.All.Select(c => new TarotCardSummaryDto
@@ -26,6 +31,7 @@ public class TarotController : ControllerBase
     }
 
     [HttpGet("cards/{id}")]
+    [AllowAnonymous]
     public ActionResult<TarotCardDetailDto> GetCardById(string id)
     {
         var card = TarotCards.GetById(id);
@@ -44,5 +50,18 @@ public class TarotController : ControllerBase
             MeaningReversed = card.MeaningReversed,
             Keywords = card.Keywords
         });
+    }
+
+    // Anonymous draw — no persistence, no auth. The client owns the result,
+    // generates its own clientToken, and may later import it via
+    // POST /api/readings/import once logged in.
+    // Rate-limited per IP to deter scripted abuse (10r/min).
+    [HttpPost("draw")]
+    [AllowAnonymous]
+    [EnableRateLimiting("anonymous-draw")]
+    public ActionResult<AnonymousDrawResponseDto> Draw([FromBody] AnonymousDrawDto dto)
+    {
+        var result = readingService.DrawAnonymous(dto.SpreadType, dto.Question);
+        return Ok(result);
     }
 }

@@ -34,6 +34,13 @@ public class TarotDbContext : DbContext
             entity.Property(e => e.Interpretation).HasColumnName("interpretation");
             entity.Property(e => e.Notes).HasColumnName("notes");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.ClientToken).HasColumnName("client_token");
+
+            // Mirrors the partial unique index created in migration 003.
+            entity.HasIndex(e => e.ClientToken)
+                  .IsUnique()
+                  .HasFilter("client_token IS NOT NULL")
+                  .HasDatabaseName("readings_client_token_unique");
         });
     }
 }

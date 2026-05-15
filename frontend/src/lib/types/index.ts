@@ -101,6 +101,15 @@ export interface ApiReadingResponse {
 	createdAt: string;
 }
 
+// Anonymous draw — same shape minus persistence fields. The client owns
+// the resulting clientToken and stores it in localStorage alongside this.
+export interface ApiAnonymousDrawResponse {
+	spreadType: string;
+	question?: string;
+	drawnAt: string;
+	cards: ApiDrawnCard[];
+}
+
 export interface ApiReadingsPage {
 	items: ApiReadingResponse[];
 	totalCount: number;

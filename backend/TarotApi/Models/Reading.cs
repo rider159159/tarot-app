@@ -12,4 +12,9 @@ public class Reading
     public string? Interpretation { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; }
+
+    // Client-generated UUID. NULL for readings created directly while logged in;
+    // populated when an anonymous draw is later imported. Partial unique index
+    // makes the import endpoint idempotent.
+    public Guid? ClientToken { get; set; }
 }

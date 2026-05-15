@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import type { ActionData } from './$types';
+	import type { ActionData, PageData } from './$types';
 
-	let { form }: { form: ActionData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
+	// form.returnTo (after fail) wins, falls back to load's data.returnTo, then '/'.
+	let returnTo = $derived(form?.returnTo ?? data.returnTo ?? '/');
 	let submitting = $state(false);
 </script>
 
@@ -24,6 +26,7 @@
 				};
 			}}
 		>
+			<input type="hidden" name="returnTo" value={returnTo} />
 			<label>
 				電子郵件
 				<input
@@ -45,7 +48,7 @@
 				{submitting ? '登入中...' : '登入'}
 			</button>
 		</form>
-		<p class="link">還沒有帳號？<a href="/register">註冊</a></p>
+		<p class="link">還沒有帳號？<a href={`/register?returnTo=${encodeURIComponent(returnTo)}`}>註冊</a></p>
 	</div>
 </main>
 

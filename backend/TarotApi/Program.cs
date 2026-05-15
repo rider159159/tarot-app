@@ -1,7 +1,9 @@
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -11,7 +13,7 @@ using TarotApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Environment variables ──────────────────────────────────────────
+// ── Environment variables ──────────────────────────────────
 var jwtSecret = Environment.GetEnvironmentVariable("SUPABASE_JWT_SECRET")
     ?? throw new InvalidOperationException("SUPABASE_JWT_SECRET is not set");
 var supabaseUrl = Environment.GetEnvironmentVariable("PUBLIC_SUPABASE_URL")
@@ -22,7 +24,7 @@ var allowedOrigins = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS")
     ?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
     ?? ["http://localhost:5173"];
 
-// ── Services ───────────────────────────────────────────────────────
+// ── Services ──────────────────────────────────────────
 
 // Controllers with global [Authorize]
 builder.Services.AddControllers(options =>
@@ -107,9 +109,34 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Rate limiter: only applied to endpoints decorated with [EnableRateLimiting].
+// Behind Zeabur's LB, the actual client IP arrives via X-Forwarded-For.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("anonymous-draw", httpContext =>
+    {
+        var forwardedFor = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        var ip = (forwardedFor?.Split(',')[0].Trim())
+                 ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                 ?? "unknown";
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: ip,
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            });
+    });
+});
+
 var app = builder.Build();
 
-// ── Middleware ──────────────────────────────────────────────────────
+// ── Middleware ─────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -118,6 +145,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("AllowFrontend");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
