@@ -2,7 +2,9 @@ import { createServerClient } from '@supabase/ssr';
 import { redirect, type Handle } from '@sveltejs/kit';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 
-const PUBLIC_PATHS = ['/login', '/register', '/auth/callback'];
+// '/' is now public so anonymous users can draw cards.
+// /history, /profile remain auth-gated by default (not in this list).
+const PUBLIC_PATHS = ['/', '/login', '/register', '/auth/callback'];
 
 export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
@@ -33,7 +35,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	const { session } = await event.locals.safeGetSession();
 	const path = event.url.pathname;
-	const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
+	// Use exact match for '/' to avoid accidentally allowing '/anything'.
+	const isPublic =
+		path === '/' || PUBLIC_PATHS.some((p) => p !== '/' && path.startsWith(p));
 
 	if (!session && !isPublic) {
 		throw redirect(303, '/login');
