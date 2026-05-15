@@ -20,6 +20,15 @@ public class ReadingController(
         return Created($"/api/readings/{result.Id}", result);
     }
 
+    // Persist a previously-drawn anonymous reading. Idempotent on client_token.
+    [HttpPost("import")]
+    public async Task<ActionResult<ReadingResponseDto>> ImportReading([FromBody] ReadingImportDto dto)
+    {
+        var userId = User.GetUserId();
+        var result = await readingService.ImportReading(userId, dto);
+        return Ok(result);
+    }
+
     [HttpGet]
     public async Task<ActionResult> GetReadings([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {

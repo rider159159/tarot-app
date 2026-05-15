@@ -1,5 +1,6 @@
 using System.Text.Json;
 using TarotApi.Models.Dtos;
+using TarotApi.Services;
 
 namespace TarotApi.Middleware;
 
@@ -20,6 +21,14 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         {
             logger.LogWarning(ex, "Unauthorized access");
             await WriteErrorResponse(context, StatusCodes.Status401Unauthorized, ex.Message, "UNAUTHORIZED");
+        }
+        catch (ReadingImportException ex)
+        {
+            logger.LogWarning(ex, "Reading import validation failed: {Code}", ex.Code);
+            var status = ex.Code == "AUTH_REQUIRED"
+                ? StatusCodes.Status401Unauthorized
+                : StatusCodes.Status400BadRequest;
+            await WriteErrorResponse(context, status, ex.Message, ex.Code);
         }
         catch (Exception ex)
         {
