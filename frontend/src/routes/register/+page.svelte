@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import type { ActionData } from './$types';
+	import type { ActionData, PageData } from './$types';
 
-	let { form }: { form: ActionData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
+	let returnTo = $derived(form?.returnTo ?? data.returnTo ?? '/');
 	let submitting = $state(false);
 	let password = $state('');
 
@@ -27,6 +28,7 @@
 				};
 			}}
 		>
+			<input type="hidden" name="returnTo" value={returnTo} />
 			<label>
 				顯示名稱
 				<input
@@ -70,7 +72,7 @@
 				{submitting ? '註冊中...' : '註冊'}
 			</button>
 		</form>
-		<p class="link">已有帳號？<a href="/login">登入</a></p>
+		<p class="link">已有帳號？<a href={`/login?returnTo=${encodeURIComponent(returnTo)}`}>登入</a></p>
 	</div>
 </main>
 
