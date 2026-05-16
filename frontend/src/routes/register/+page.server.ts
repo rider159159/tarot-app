@@ -50,7 +50,7 @@ export const actions: Actions = {
 			return fail(error.status || 400, { error: message, email, displayName, returnTo });
 		}
 
-		return { success: true, returnTo };
+		return { success: true, returnTo, email };
 	}
 };
 

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { ActionData, PageData } from './$types';
+	import ResendVerification from '$lib/components/ResendVerification.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -72,6 +73,9 @@
 				{submitting ? '註冊中...' : '註冊'}
 			</button>
 		</form>
+		{#if form?.success && form?.email}
+			<ResendVerification email={form.email} />
+		{/if}
 		<p class="link">已有帳號？<a href={`/login?returnTo=${encodeURIComponent(returnTo)}`}>登入</a></p>
 	</div>
 </main>
