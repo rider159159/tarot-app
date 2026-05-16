@@ -4,7 +4,14 @@ import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/publi
 
 // '/' is now public so anonymous users can draw cards.
 // /history, /profile remain auth-gated by default (not in this list).
-const PUBLIC_PATHS = ['/', '/login', '/register', '/auth/callback'];
+const PUBLIC_PATHS = [
+	'/',
+	'/login',
+	'/register',
+	'/auth/callback',
+	'/forgot-password',
+	'/auth/reset-password'
+];
 
 export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {

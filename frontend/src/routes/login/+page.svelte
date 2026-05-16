@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { ActionData, PageData } from './$types';
+	import ResendVerification from '$lib/components/ResendVerification.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -16,6 +17,12 @@
 <main>
 	<div class="auth-card">
 		<h1>登入</h1>
+		{#if data.loadNotice}
+			<p class="banner banner-notice">{data.loadNotice}</p>
+		{/if}
+		{#if data.loadError}
+			<p class="banner banner-error">{data.loadError}</p>
+		{/if}
 		<form
 			method="POST"
 			use:enhance={() => {
@@ -48,6 +55,10 @@
 				{submitting ? '登入中...' : '登入'}
 			</button>
 		</form>
+		{#if form?.needsVerification && form?.email}
+			<ResendVerification email={form.email} />
+		{/if}
+		<p class="link"><a href="/forgot-password">忘記密碼？</a></p>
 		<p class="link">還沒有帳號？<a href={`/register?returnTo=${encodeURIComponent(returnTo)}`}>註冊</a></p>
 	</div>
 </main>
@@ -109,6 +120,25 @@
 		color: #a03030;
 		font-size: 0.875rem;
 		margin: 0;
+	}
+
+	.banner {
+		font-size: 0.875rem;
+		border-radius: 6px;
+		padding: 0.75rem;
+		margin: 0 0 1rem;
+	}
+
+	.banner-error {
+		color: #a03030;
+		background: #fbeaea;
+		border: 1px solid #e0a8a8;
+	}
+
+	.banner-notice {
+		color: #2d6a2d;
+		background: #e8f5e8;
+		border: 1px solid #a8d8a8;
 	}
 
 	button {
