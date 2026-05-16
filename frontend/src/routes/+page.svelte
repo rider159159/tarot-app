@@ -13,6 +13,20 @@
 	import SpreadSelector from '$lib/components/SpreadSelector.svelte';
 	import QuestionInput from '$lib/components/QuestionInput.svelte';
 	import DrawButton from '$lib/components/DrawButton.svelte';
+	import Seo from '$lib/components/Seo.svelte';
+	import { SITE } from '$lib/seo/config';
+
+	// JSON-LD 結構化資料：讓搜尋引擎理解這是一個塔羅占卜網路應用
+	const jsonLd = `<script type="application/ld+json">${JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'WebApplication',
+		name: SITE.name,
+		description: SITE.defaultDescription,
+		url: SITE.url,
+		applicationCategory: 'LifestyleApplication',
+		inLanguage: 'zh-TW',
+		offers: { '@type': 'Offer', price: '0', priceCurrency: 'TWD' }
+	})}<\/script>`;
 	import ReadingDisplay from '$lib/components/ReadingDisplay.svelte';
 	import CardPicker from '$lib/components/CardPicker.svelte';
 	import AnonymousCta from '$lib/components/AnonymousCta.svelte';
@@ -177,8 +191,10 @@
 	}
 </script>
 
+<Seo />
 <svelte:head>
-	<title>塔羅占卜</title>
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+	{@html jsonLd}
 </svelte:head>
 
 <main>

@@ -5,6 +5,7 @@
 	import { copyJsonToClipboard, type CopyStatus } from '$lib/utils/clipboard';
 	import type { PageData, ActionData } from './$types';
 	import ReadingDisplay from '$lib/components/ReadingDisplay.svelte';
+	import Seo from '$lib/components/Seo.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -52,9 +53,7 @@
 	});
 </script>
 
-<svelte:head>
-	<title>個人頁面 - 塔羅占卜</title>
-</svelte:head>
+<Seo title="個人頁面" description="管理你的塔羅占卜帳號與統計資料。" noindex />
 
 <main>
 	<h1>個人頁面</h1>

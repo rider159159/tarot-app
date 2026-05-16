@@ -3,6 +3,7 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { supabase } from '$lib/supabase';
 	import type { PageData } from './$types';
+	import Seo from '$lib/components/Seo.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -33,9 +34,7 @@
 	});
 </script>
 
-<svelte:head>
-	<title>驗證中 - 塔羅占卜</title>
-</svelte:head>
+<Seo title="驗證中" description="正在處理你的帳號驗證。" noindex />
 
 <main>
 	<p>正在完成信箱驗證，請稍候…</p>

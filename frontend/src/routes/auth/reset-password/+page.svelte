@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { ActionData, PageData } from './$types';
+	import Seo from '$lib/components/Seo.svelte';
 
 	let { form, data }: { form: ActionData; data: PageData } = $props();
 
@@ -12,9 +13,7 @@
 	let mismatch = $derived(confirmPassword.length > 0 && password !== confirmPassword);
 </script>
 
-<svelte:head>
-	<title>重設密碼 - 塔羅占卜</title>
-</svelte:head>
+<Seo title="重設密碼" description="設定新的塔羅占卜帳號密碼。" noindex />
 
 <main>
 	<div class="auth-card">

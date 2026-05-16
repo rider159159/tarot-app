@@ -6,6 +6,7 @@
 	import { copyJsonToClipboard, downloadJson, type CopyStatus } from '$lib/utils/clipboard';
 	import { getCardImageUrl } from '$lib/tarot';
 	import { lightbox } from '$lib/components/lightboxStore.svelte';
+	import Seo from '$lib/components/Seo.svelte';
 	import type { PageData, ActionData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -49,9 +50,7 @@
 	});
 </script>
 
-<svelte:head>
-	<title>歷史紀錄 - 塔羅占卜</title>
-</svelte:head>
+<Seo title="歷史紀錄" description="檢視你過往的塔羅占卜紀錄。" noindex />
 
 <main>
 	<h1>歷史紀錄</h1>

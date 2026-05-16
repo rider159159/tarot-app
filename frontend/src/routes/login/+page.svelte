@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import type { ActionData, PageData } from './$types';
 	import ResendVerification from '$lib/components/ResendVerification.svelte';
+	import Seo from '$lib/components/Seo.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -10,9 +11,11 @@
 	let submitting = $state(false);
 </script>
 
-<svelte:head>
-	<title>登入 - 塔羅占卜</title>
-</svelte:head>
+<Seo
+	title="登入"
+	description="登入塔羅占卜，保存你的占卜歷史並隨時回顧過往牌陣。"
+	noindex
+/>
 
 <main>
 	<div class="auth-card">

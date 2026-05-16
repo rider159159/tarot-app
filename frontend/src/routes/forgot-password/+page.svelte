@@ -1,15 +1,14 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { ActionData } from './$types';
+	import Seo from '$lib/components/Seo.svelte';
 
 	let { form }: { form: ActionData } = $props();
 
 	let submitting = $state(false);
 </script>
 
-<svelte:head>
-	<title>忘記密碼 - 塔羅占卜</title>
-</svelte:head>
+<Seo title="忘記密碼" description="重設你的塔羅占卜帳號密碼。" noindex />
 
 <main>
 	<div class="auth-card">
