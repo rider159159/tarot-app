@@ -47,7 +47,6 @@
 		justify-content: center;
 		align-items: center;
 		min-height: 100vh;
-		font-family: system-ui, -apple-system, sans-serif;
-		color: #555;
+		color: var(--c-text-3);
 	}
 </style>

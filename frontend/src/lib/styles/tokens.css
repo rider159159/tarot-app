@@ -1,0 +1,87 @@
+/* ============================================================
+   Design Tokens — 改造版 Bugatti 風格（深紫黑底 + 月光色）
+   全站唯一的色彩 / 字體 / 間距來源。改色只改這裡。
+   ============================================================ */
+
+:root {
+	color-scheme: dark;
+
+	/* ---- 色彩：Canvas / Surface 三階 ---- */
+	--c-canvas: #0e0a14; /* 最底層頁面背景 */
+	--c-surface-1: #15101d; /* 卡片 / 區塊底，比 canvas 微亮 */
+	--c-surface-2: #1d1726; /* input、巢狀區塊、hover 態 */
+
+	/* ---- Hairline 分隔線兩階 ---- */
+	--c-hairline: rgba(216, 212, 224, 0.14); /* 一般分隔線 */
+	--c-hairline-strong: rgba(216, 212, 224, 0.28); /* 按鈕外框、強調邊界 */
+
+	/* ---- 文字四階 ---- */
+	--c-text-1: #ffffff; /* 標題 / 主文字 */
+	--c-text-2: #c8c2d0; /* 內文 */
+	--c-text-3: #8b8494; /* 次要說明、英文牌名、日期 */
+	--c-text-4: #5f5a68; /* placeholder、disabled */
+
+	/* ---- 強調 / 月光色 ---- */
+	--c-accent: #d8d4e0; /* 月光銀白：強調、active、focus */
+	--c-accent-dim: #9a93a6; /* 月光暗化版（逆位用） */
+	--c-link: #b9b2e0; /* 連結：帶紫的淺色 */
+	--c-link-hover: #d8d4e0;
+
+	/* ---- 狀態色（壓暗，不刺眼）---- */
+	--c-success: #8fb89a;
+	--c-success-bg: rgba(143, 184, 154, 0.1);
+	--c-warning: #c9a86a;
+	--c-warning-bg: rgba(201, 168, 106, 0.1);
+	--c-error: #c98a8a;
+	--c-error-bg: rgba(201, 138, 138, 0.1);
+
+	/* ---- 字體 Stack ---- */
+	--font-serif: 'Noto Serif TC', 'Songti TC', serif; /* 標題 + 內文 */
+	--font-mono: 'JetBrains Mono', 'Noto Sans Mono', 'Noto Sans Mono CJK TC', monospace; /* 按鈕/導航/標籤/日期 */
+
+	/* ---- 字級階層 ---- */
+	--fs-display: 2.5rem; /* 頁面 h1 */
+	--fs-h1: 2rem;
+	--fs-h2: 1.5rem;
+	--fs-h3: 1.125rem;
+	--fs-body: 1rem;
+	--fs-sm: 0.875rem;
+	--fs-xs: 0.75rem;
+
+	/* ---- 字距（標題寬字距營造精緻感）---- */
+	--ls-display: 0.12em;
+	--ls-heading: 0.1em;
+	--ls-body: 0.02em;
+	--ls-mono: 0.06em;
+
+	/* ---- 字重（全站一律 400）---- */
+	--fw: 400;
+
+	/* ---- 行高 ---- */
+	--lh-tight: 1.3; /* 標題 */
+	--lh-body: 1.8; /* 中文內文 */
+
+	/* ---- 間距尺度 ---- */
+	--sp-1: 0.25rem;
+	--sp-2: 0.5rem;
+	--sp-3: 0.75rem;
+	--sp-4: 1rem;
+	--sp-6: 1.5rem;
+	--sp-8: 2rem;
+	--sp-12: 3rem;
+	--sp-16: 4rem;
+	--sp-20: 5rem; /* 80px */
+	--sp-30: 7.5rem; /* 120px：桌機 section 間距 */
+	--section-gap: clamp(var(--sp-12), 10vw, var(--sp-30));
+
+	/* ---- 圓角 ---- */
+	--radius-0: 0; /* 預設：所有元件直角 */
+	--radius-pill: 999px; /* 僅按鈕 */
+
+	/* ---- 版面 ---- */
+	--content-max: 800px;
+	--content-pad: clamp(var(--sp-4), 5vw, var(--sp-8));
+
+	/* ---- 動效 ---- */
+	--transition: 0.18s ease;
+}

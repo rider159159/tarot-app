@@ -67,42 +67,46 @@
 
 <style>
 	.resend {
-		margin-top: 1rem;
+		margin-top: var(--sp-4);
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
+		gap: var(--sp-2);
 	}
 
+	/* 按鈕樣板：透明底 + 1px 外框 + pill */
 	button {
-		padding: 0.5rem 0.75rem;
+		padding: var(--sp-2) var(--sp-4);
 		background: transparent;
-		color: #4a3060;
-		border: 1px solid #4a3060;
-		border-radius: 6px;
-		font-size: 0.875rem;
+		color: var(--c-text-1);
+		border: 1px solid var(--c-hairline-strong);
+		border-radius: var(--radius-pill);
+		font-family: var(--font-mono);
+		font-size: var(--fs-sm);
+		letter-spacing: var(--ls-mono);
 		cursor: pointer;
-		font-family: inherit;
+		transition: border-color var(--transition), color var(--transition);
 	}
 
 	button:hover:not(:disabled) {
-		background: #f1ecf5;
+		border-color: var(--c-accent);
+		color: var(--c-accent);
 	}
 
 	button:disabled {
-		opacity: 0.6;
+		opacity: 0.4;
 		cursor: not-allowed;
 	}
 
 	p {
-		font-size: 0.8rem;
+		font-size: var(--fs-xs);
 		margin: 0;
 	}
 
 	.notice {
-		color: #2d6a2d;
+		color: var(--c-success);
 	}
 
 	.error {
-		color: #a03030;
+		color: var(--c-error);
 	}
 </style>

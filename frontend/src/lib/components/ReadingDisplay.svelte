@@ -36,26 +36,25 @@
 
 <style>
 	.reading-display {
-		margin-top: 1rem;
+		margin-top: var(--sp-4);
 	}
 
 	h2 {
 		text-align: center;
-		margin-bottom: 1rem;
-		color: #4a3060;
+		margin-bottom: var(--sp-4);
+		color: var(--c-text-1);
 	}
 
 	.question {
 		text-align: center;
-		font-style: italic;
-		color: #555;
-		margin-bottom: 1.5rem;
+		color: var(--c-text-3);
+		margin-bottom: var(--sp-6);
 	}
 
 	.feeling-divider {
 		border: none;
-		border-top: 1px dashed #c0b0d0;
-		margin: 1.5rem 0;
+		border-top: 1px solid var(--c-hairline);
+		margin: var(--sp-6) 0;
 	}
 
 	.feeling-section {
@@ -63,15 +62,17 @@
 	}
 
 	.feeling-title {
-		color: #7a5a90;
-		font-size: 1rem;
-		margin-bottom: 0.75rem;
+		color: var(--c-accent);
+		font-size: var(--fs-body);
+		margin-bottom: var(--sp-3);
 	}
 
 	footer {
 		text-align: center;
-		color: #999;
-		font-size: 0.8rem;
-		margin-top: 1rem;
+		color: var(--c-text-3);
+		font-family: var(--font-mono);
+		font-size: var(--fs-xs);
+		letter-spacing: var(--ls-mono);
+		margin-top: var(--sp-4);
 	}
 </style>

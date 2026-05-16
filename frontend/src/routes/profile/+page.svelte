@@ -202,43 +202,43 @@
 
 <style>
 	main {
-		max-width: 800px;
+		max-width: var(--content-max);
 		margin: 0 auto;
-		padding: 2rem 1rem;
-		font-family: system-ui, -apple-system, sans-serif;
+		padding: var(--sp-12) var(--content-pad);
 	}
 
 	h1 {
 		text-align: center;
-		color: #333;
-		margin: 0 0 2rem;
+		font-size: var(--fs-display);
+		letter-spacing: var(--ls-display);
+		margin: 0 0 var(--sp-12);
 	}
 
 	h2 {
-		color: #4a3060;
-		font-size: 1.1rem;
-		margin: 0 0 1rem;
+		color: var(--c-accent);
+		font-size: var(--fs-h3);
+		margin: 0 0 var(--sp-4);
 	}
 
 	.error {
-		color: #a03030;
-		font-size: 0.85rem;
-		margin-top: 0.5rem;
+		color: var(--c-error);
+		font-size: var(--fs-sm);
+		margin-top: var(--sp-2);
 	}
 
 	section {
-		border: 1px solid #ddd;
-		border-radius: 8px;
-		padding: 1.25rem;
-		margin-bottom: 1.5rem;
+		border: 1px solid var(--c-hairline);
+		border-radius: var(--radius-0);
+		padding: var(--sp-6);
+		margin-bottom: var(--sp-6);
 	}
 
 	.info-row {
 		display: flex;
 		align-items: flex-start;
-		gap: 1rem;
-		padding: 0.5rem 0;
-		border-bottom: 1px solid #eee;
+		gap: var(--sp-4);
+		padding: var(--sp-2) 0;
+		border-bottom: 1px solid var(--c-hairline);
 	}
 
 	.info-row:last-of-type {
@@ -246,162 +246,120 @@
 	}
 
 	.label {
-		font-size: 0.85rem;
-		color: #666;
+		font-family: var(--font-mono);
+		font-size: var(--fs-xs);
+		letter-spacing: var(--ls-mono);
+		color: var(--c-text-3);
 		min-width: 5rem;
-		padding-top: 0.25rem;
+		padding-top: var(--sp-1);
 	}
 
 	.value {
-		font-size: 0.95rem;
-		color: #333;
+		font-size: var(--fs-body);
+		color: var(--c-text-1);
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: var(--sp-2);
 	}
 
-	.edit-btn {
-		padding: 0.125rem 0.5rem;
-		background: none;
-		border: 1px solid #4a3060;
-		border-radius: 4px;
-		color: #4a3060;
-		font-size: 0.75rem;
+	/* 按鈕樣板：透明底 + 1px 外框 + pill（編輯/儲存/取消/匯出/登出共用）*/
+	.edit-btn,
+	.save-btn,
+	.cancel-btn,
+	.export-btn,
+	.logout-btn {
+		padding: var(--sp-1) var(--sp-3);
+		background: transparent;
+		border: 1px solid var(--c-hairline-strong);
+		border-radius: var(--radius-pill);
+		color: var(--c-text-1);
+		font-family: var(--font-mono);
+		font-size: var(--fs-xs);
+		letter-spacing: var(--ls-mono);
 		cursor: pointer;
-		font-family: inherit;
+		transition: border-color var(--transition), color var(--transition);
 	}
 
-	.edit-btn:hover {
-		background: #f0ecf5;
+	.edit-btn:hover:not(:disabled),
+	.save-btn:hover:not(:disabled),
+	.cancel-btn:hover:not(:disabled),
+	.export-btn:hover:not(:disabled) {
+		border-color: var(--c-accent);
+		color: var(--c-accent);
+	}
+
+	.save-btn:disabled,
+	.export-btn:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
 	}
 
 	.edit-group {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: var(--sp-2);
 	}
 
 	.edit-input {
-		padding: 0.375rem 0.5rem;
-		border: 1px solid #ddd;
-		border-radius: 6px;
-		font-size: 0.9rem;
-		font-family: inherit;
+		padding: var(--sp-2);
+		font-family: var(--font-serif);
+		font-size: var(--fs-sm);
 		width: 12rem;
 	}
 
-	.edit-input:focus {
-		outline: none;
-		border-color: #4a3060;
-		box-shadow: 0 0 0 2px rgba(74, 48, 96, 0.1);
-	}
-
-	.save-btn {
-		padding: 0.375rem 0.75rem;
-		background: #4a3060;
-		border: none;
-		border-radius: 6px;
-		color: #fff;
-		font-size: 0.8rem;
-		cursor: pointer;
-		font-family: inherit;
-	}
-
-	.save-btn:hover:not(:disabled) {
-		background: #3a2050;
-	}
-
-	.save-btn:disabled {
-		opacity: 0.5;
-	}
-
-	.cancel-btn {
-		padding: 0.375rem 0.75rem;
-		background: none;
-		border: 1px solid #999;
-		border-radius: 6px;
-		color: #666;
-		font-size: 0.8rem;
-		cursor: pointer;
-		font-family: inherit;
-	}
-
-	.cancel-btn:hover:not(:disabled) {
-		border-color: #333;
-		color: #333;
-	}
-
 	.weekly-section {
-		background: linear-gradient(135deg, #f8f4fc 0%, #efe8f5 100%);
-		border-color: #d0c0e0;
+		background: var(--c-surface-1);
+		border-color: var(--c-hairline);
 	}
 
 	.weekly-hint {
 		text-align: center;
-		color: #666;
-		font-size: 0.9rem;
-		margin: 0 0 1rem;
+		color: var(--c-text-3);
+		font-size: var(--fs-sm);
+		margin: 0 0 var(--sp-4);
 	}
 
+	/* 按鈕樣板：透明底 + 1px 外框 + pill */
 	.draw-weekly-btn {
 		display: block;
 		width: 100%;
-		padding: 0.75rem;
-		background: #4a3060;
-		border: none;
-		border-radius: 8px;
-		color: #fff;
-		font-size: 1rem;
+		padding: var(--sp-3);
+		background: transparent;
+		border: 1px solid var(--c-hairline-strong);
+		border-radius: var(--radius-pill);
+		color: var(--c-text-1);
+		font-family: var(--font-mono);
+		font-size: var(--fs-body);
+		letter-spacing: var(--ls-mono);
 		cursor: pointer;
-		font-family: inherit;
-		transition: background 0.2s;
+		transition: border-color var(--transition), color var(--transition);
 	}
 
 	.draw-weekly-btn:hover:not(:disabled) {
-		background: #3a2050;
+		border-color: var(--c-accent);
+		color: var(--c-accent);
 	}
 
 	.draw-weekly-btn:disabled {
-		opacity: 0.5;
+		opacity: 0.4;
 		cursor: not-allowed;
 	}
 
 	.weekly-done {
 		text-align: center;
-		color: #7a5a90;
-		font-size: 0.9rem;
+		color: var(--c-text-3);
+		font-size: var(--fs-sm);
 		margin: 0;
 	}
 
 	.export-form {
 		text-align: center;
-		margin-top: 1rem;
-	}
-
-	.export-btn {
-		padding: 0.45rem 1rem;
-		background: none;
-		border: 1px solid #7a5a90;
-		border-radius: 6px;
-		color: #7a5a90;
-		font-size: 0.85rem;
-		cursor: pointer;
-		font-family: inherit;
-	}
-
-	.export-btn:hover:not(:disabled) {
-		background: #7a5a90;
-		color: #fff;
-	}
-
-	.export-btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
+		margin-top: var(--sp-4);
 	}
 
 	.stat-card {
-		padding: 0.75rem 0;
-		border-bottom: 1px solid #eee;
+		padding: var(--sp-3) 0;
+		border-bottom: 1px solid var(--c-hairline);
 	}
 
 	.stat-card:last-child {
@@ -409,27 +367,28 @@
 	}
 
 	.stat-label {
-		font-size: 0.85rem;
-		color: #666;
+		font-family: var(--font-mono);
+		font-size: var(--fs-xs);
+		letter-spacing: var(--ls-mono);
+		color: var(--c-text-3);
 		display: block;
-		margin-bottom: 0.25rem;
+		margin-bottom: var(--sp-1);
 	}
 
 	.stat-value {
-		font-size: 1rem;
-		color: #333;
-		font-weight: 500;
+		font-size: var(--fs-body);
+		color: var(--c-text-1);
 	}
 
 	.stat-list {
-		margin: 0.5rem 0 0;
-		padding-left: 1.25rem;
-		font-size: 0.9rem;
-		color: #333;
+		margin: var(--sp-2) 0 0;
+		padding-left: var(--sp-6);
+		font-size: var(--fs-sm);
+		color: var(--c-text-2);
 	}
 
 	.stat-list li {
-		padding: 0.125rem 0;
+		padding: var(--sp-1) 0;
 	}
 
 	.logout-section {
@@ -439,18 +398,12 @@
 	}
 
 	.logout-btn {
-		padding: 0.5rem 1.5rem;
-		background: none;
-		border: 1px solid #a03030;
-		border-radius: 6px;
-		color: #a03030;
-		font-size: 0.9rem;
-		cursor: pointer;
-		font-family: inherit;
+		padding: var(--sp-2) var(--sp-6);
+		font-size: var(--fs-sm);
 	}
 
 	.logout-btn:hover {
-		background: #a03030;
-		color: #fff;
+		border-color: var(--c-error);
+		color: var(--c-error);
 	}
 </style>

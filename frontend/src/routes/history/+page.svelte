@@ -5,6 +5,7 @@
 	import { getSpreadName, formatDate } from '$lib/utils/reading';
 	import { copyJsonToClipboard, downloadJson, type CopyStatus } from '$lib/utils/clipboard';
 	import { getCardImageUrl } from '$lib/tarot';
+	import { lightbox } from '$lib/components/lightboxStore.svelte';
 	import type { PageData, ActionData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -134,9 +135,15 @@
 									</div>
 									<div class="card-body">
 										{#if imageUrl}
-											<div class="card-image" class:reversed={isReversed}>
+											<button
+												type="button"
+												class="card-image"
+												class:reversed={isReversed}
+												aria-label={`放大檢視 ${card.nameCht}`}
+												onclick={() => lightbox.open(imageUrl, card.nameCht, isReversed)}
+											>
 												<img src={imageUrl} alt={card.nameCht} loading="lazy" />
-											</div>
+											</button>
 										{/if}
 										<div class="card-info">
 											<p class="card-name">{card.nameCht} <em>{card.name}</em></p>
@@ -220,125 +227,136 @@
 
 <style>
 	main {
-		max-width: 800px;
+		max-width: var(--content-max);
 		margin: 0 auto;
-		padding: 2rem 1rem;
-		font-family: system-ui, -apple-system, sans-serif;
+		padding: var(--sp-12) var(--content-pad);
 	}
 
 	h1 {
 		text-align: center;
-		color: #333;
-		margin: 0 0 2rem;
+		font-size: var(--fs-display);
+		letter-spacing: var(--ls-display);
+		margin: 0 0 var(--sp-12);
 	}
 
 	.error {
 		text-align: center;
-		color: #a03030;
+		color: var(--c-error);
 	}
 
 	.empty {
 		text-align: center;
-		color: #666;
-		padding: 3rem 0;
+		color: var(--c-text-3);
+		padding: var(--sp-12) 0;
 	}
 
 	.empty p {
-		font-size: 1.1rem;
-		margin-bottom: 1.5rem;
+		font-size: var(--fs-h3);
+		margin-bottom: var(--sp-6);
 	}
 
+	/* 按鈕樣板：透明底 + 1px 外框 + pill */
 	.action-btn {
 		display: inline-block;
-		padding: 0.5rem 1.25rem;
-		background: #4a3060;
-		color: #fff;
-		border-radius: 6px;
+		padding: var(--sp-2) var(--sp-6);
+		background: transparent;
+		color: var(--c-text-1);
+		border: 1px solid var(--c-hairline-strong);
+		border-radius: var(--radius-pill);
 		text-decoration: none;
-		font-size: 0.9rem;
+		font-family: var(--font-mono);
+		font-size: var(--fs-sm);
+		letter-spacing: var(--ls-mono);
+		transition: border-color var(--transition), color var(--transition);
 	}
 
 	.action-btn:hover {
-		background: #3a2050;
+		border-color: var(--c-accent);
+		color: var(--c-accent);
 	}
 
 	.readings-list {
 		display: flex;
 		flex-direction: column;
-		gap: 0.75rem;
+		gap: var(--sp-3);
 	}
 
 	.reading-item {
-		border: 1px solid #ddd;
-		border-radius: 8px;
+		border: 1px solid var(--c-hairline);
+		border-radius: var(--radius-0);
 		overflow: hidden;
 	}
 
 	.reading-header {
 		width: 100%;
-		background: none;
+		background: transparent;
 		border: none;
-		padding: 1rem;
+		padding: var(--sp-4);
 		cursor: pointer;
 		text-align: left;
 		font-family: inherit;
+		color: inherit;
 		position: relative;
+		transition: background var(--transition);
 	}
 
 	.reading-header:hover {
-		background: #faf8fc;
+		background: var(--c-surface-1);
 	}
 
 	.reading-meta {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
-		margin-bottom: 0.25rem;
+		gap: var(--sp-3);
+		margin-bottom: var(--sp-1);
 	}
 
 	.date {
-		font-size: 0.85rem;
-		color: #666;
+		font-family: var(--font-mono);
+		font-size: var(--fs-xs);
+		letter-spacing: var(--ls-mono);
+		color: var(--c-text-3);
 	}
 
 	.spread-type {
-		font-size: 0.8rem;
-		background: #f0ecf5;
-		color: #4a3060;
-		padding: 0.125rem 0.5rem;
-		border-radius: 4px;
+		font-family: var(--font-mono);
+		font-size: var(--fs-xs);
+		letter-spacing: var(--ls-mono);
+		background: var(--c-surface-2);
+		color: var(--c-text-2);
+		padding: var(--sp-1) var(--sp-2);
+		border-radius: var(--radius-0);
 	}
 
 	.question {
-		font-size: 0.9rem;
-		color: #555;
-		margin: 0.25rem 0;
-		font-style: italic;
+		font-size: var(--fs-sm);
+		color: var(--c-text-3);
+		margin: var(--sp-1) 0;
 	}
 
 	.card-names {
-		font-size: 0.9rem;
-		color: #333;
-		margin: 0.25rem 0 0;
+		font-size: var(--fs-sm);
+		color: var(--c-text-1);
+		margin: var(--sp-1) 0 0;
 	}
 
 	.expand-icon {
 		position: absolute;
-		right: 1rem;
-		top: 1rem;
-		font-size: 0.75rem;
-		color: #999;
+		right: var(--sp-4);
+		top: var(--sp-4);
+		font-size: var(--fs-xs);
+		color: var(--c-text-3);
 	}
 
 	.reading-detail {
-		border-top: 1px solid #eee;
-		padding: 1rem;
-		background: #faf8fc;
+		border-top: 1px solid var(--c-hairline);
+		padding: var(--sp-4);
+		background: var(--c-surface-1);
 	}
 
 	.card-detail {
-		padding: 0.75rem 0;
-		border-bottom: 1px solid #eee;
+		padding: var(--sp-3) 0;
+		border-bottom: 1px solid var(--c-hairline);
 	}
 
 	.card-detail:last-of-type {
@@ -348,30 +366,46 @@
 	.card-header {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
-		margin-bottom: 0.5rem;
+		gap: var(--sp-2);
+		margin-bottom: var(--sp-2);
 	}
 
 	.card-body {
 		display: flex;
-		gap: 1rem;
+		gap: var(--sp-4);
 		align-items: flex-start;
 	}
 
+	/* card-image 是 <button>：重置按鈕預設樣式，點擊開 lightbox */
 	.card-image {
 		flex-shrink: 0;
 		width: 90px;
+		display: block;
+		padding: 0;
+		margin: 0;
+		background: transparent;
+		font: inherit;
+		cursor: zoom-in;
+		/* 左側 2px 標記條：正逆位視覺訊號 */
+		border: none;
+		border-left: 2px solid var(--c-accent);
+		padding-left: var(--sp-2);
 	}
 
 	.card-image.reversed {
 		transform: rotate(180deg);
+		border-left-color: var(--c-accent-dim);
 	}
 
 	.card-image img {
 		width: 100%;
 		height: auto;
-		border-radius: 4px;
-		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+		border: 1px solid var(--c-hairline);
+		border-radius: var(--radius-0);
+	}
+
+	.card-image.reversed img {
+		filter: brightness(0.82) saturate(0.9);
 	}
 
 	.card-info {
@@ -379,168 +413,153 @@
 		min-width: 0;
 	}
 
+	/* 方向標籤：mono 字體，像「狀態標記」 */
 	.orientation {
-		font-size: 0.8rem;
-		color: #4a3060;
+		font-family: var(--font-mono);
+		font-size: var(--fs-xs);
+		letter-spacing: var(--ls-mono);
+		color: var(--c-accent);
 	}
 
 	.orientation.reversed {
-		color: #a03030;
+		color: var(--c-accent-dim);
 	}
 
 	.card-name {
-		margin: 0.25rem 0;
-		font-size: 0.95rem;
+		margin: var(--sp-1) 0;
+		font-size: var(--fs-body);
+		color: var(--c-text-1);
 	}
 
 	.card-name em {
-		color: #888;
-		font-size: 0.85rem;
+		color: var(--c-text-3);
+		font-size: var(--fs-sm);
 	}
 
 	.card-meaning {
-		font-size: 0.875rem;
-		color: #555;
-		line-height: 1.6;
-		margin: 0.25rem 0;
+		font-size: var(--fs-sm);
+		color: var(--c-text-2);
+		line-height: var(--lh-body);
+		margin: var(--sp-1) 0;
 	}
 
 	.keywords {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.375rem;
-		margin-top: 0.375rem;
+		gap: var(--sp-1);
+		margin-top: var(--sp-1);
 	}
 
 	.keyword {
-		font-size: 0.75rem;
-		background: #f0ecf5;
-		color: #4a3060;
-		padding: 0.125rem 0.5rem;
-		border-radius: 10px;
+		font-family: var(--font-mono);
+		font-size: var(--fs-xs);
+		letter-spacing: var(--ls-mono);
+		background: var(--c-surface-2);
+		color: var(--c-text-3);
+		padding: var(--sp-1) var(--sp-2);
+		border-radius: var(--radius-0);
 	}
 
 	.detail-actions {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.5rem;
-		margin-top: 1rem;
+		gap: var(--sp-2);
+		margin-top: var(--sp-4);
 	}
 
-	.delete-btn {
-		padding: 0.375rem 0.75rem;
-		background: none;
-		border: 1px solid #a03030;
-		border-radius: 6px;
-		color: #a03030;
-		font-size: 0.8rem;
+	/* 按鈕樣板：透明底 + 1px 外框 + pill（刪除/匯出/分頁共用）*/
+	.delete-btn,
+	.export-btn,
+	.page-btn {
+		padding: var(--sp-1) var(--sp-3);
+		background: transparent;
+		border: 1px solid var(--c-hairline-strong);
+		border-radius: var(--radius-pill);
+		color: var(--c-text-1);
+		font-family: var(--font-mono);
+		font-size: var(--fs-xs);
+		letter-spacing: var(--ls-mono);
 		cursor: pointer;
-		font-family: inherit;
+		transition: border-color var(--transition), color var(--transition);
 	}
 
+	.delete-btn:hover:not(:disabled),
+	.export-btn:hover:not(:disabled),
+	.page-btn:hover:not(:disabled) {
+		border-color: var(--c-accent);
+		color: var(--c-accent);
+	}
+
+	/* 刪除鍵 hover 用柔粉，提示破壞性操作 */
 	.delete-btn:hover:not(:disabled) {
-		background: #a03030;
-		color: #fff;
+		border-color: var(--c-error);
+		color: var(--c-error);
 	}
 
-	.delete-btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.export-btn {
-		padding: 0.375rem 0.75rem;
-		background: none;
-		border: 1px solid #4a3060;
-		border-radius: 6px;
-		color: #4a3060;
-		font-size: 0.8rem;
-		cursor: pointer;
-		font-family: inherit;
-	}
-
-	.export-btn:hover:not(:disabled) {
-		background: #4a3060;
-		color: #fff;
-	}
-
-	.export-btn:disabled {
-		opacity: 0.5;
+	.delete-btn:disabled,
+	.export-btn:disabled,
+	.page-btn:disabled {
+		opacity: 0.4;
 		cursor: not-allowed;
 	}
 
 	.batch-export {
-		border: 1px solid #d0c0e0;
-		background: #faf8fc;
-		border-radius: 8px;
-		padding: 1rem;
-		margin-bottom: 1.25rem;
+		border: 1px solid var(--c-hairline);
+		background: var(--c-surface-1);
+		border-radius: var(--radius-0);
+		padding: var(--sp-4);
+		margin-bottom: var(--sp-6);
 		text-align: center;
 	}
 
 	.batch-hint {
-		font-size: 0.85rem;
-		color: #666;
-		margin: 0 0 0.75rem;
+		font-size: var(--fs-sm);
+		color: var(--c-text-3);
+		margin: 0 0 var(--sp-3);
 	}
 
+	/* 按鈕樣板：透明底 + 1px 外框 + pill */
 	.batch-btn {
-		padding: 0.5rem 1.25rem;
-		background: #4a3060;
-		border: none;
-		border-radius: 6px;
-		color: #fff;
-		font-size: 0.9rem;
+		padding: var(--sp-2) var(--sp-6);
+		background: transparent;
+		border: 1px solid var(--c-hairline-strong);
+		border-radius: var(--radius-pill);
+		color: var(--c-text-1);
+		font-family: var(--font-mono);
+		font-size: var(--fs-sm);
+		letter-spacing: var(--ls-mono);
 		cursor: pointer;
-		font-family: inherit;
+		transition: border-color var(--transition), color var(--transition);
 	}
 
 	.batch-btn:hover:not(:disabled) {
-		background: #3a2050;
+		border-color: var(--c-accent);
+		color: var(--c-accent);
 	}
 
 	.batch-btn:disabled {
-		opacity: 0.5;
+		opacity: 0.4;
 		cursor: not-allowed;
 	}
 
 	.success {
-		color: #2a7a2a;
-		font-size: 0.85rem;
-		margin: 0.5rem 0 0;
+		color: var(--c-success);
+		font-size: var(--fs-sm);
+		margin: var(--sp-2) 0 0;
 	}
 
 	.pagination {
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		gap: 1rem;
-		margin-top: 2rem;
-	}
-
-	.page-btn {
-		padding: 0.375rem 0.75rem;
-		border: 1px solid #4a3060;
-		border-radius: 6px;
-		background: none;
-		color: #4a3060;
-		font-size: 0.85rem;
-		cursor: pointer;
-		font-family: inherit;
-	}
-
-	.page-btn:hover:not(:disabled) {
-		background: #4a3060;
-		color: #fff;
-	}
-
-	.page-btn:disabled {
-		opacity: 0.4;
-		cursor: not-allowed;
+		gap: var(--sp-4);
+		margin-top: var(--sp-8);
 	}
 
 	.page-info {
-		font-size: 0.85rem;
-		color: #666;
+		font-family: var(--font-mono);
+		font-size: var(--fs-xs);
+		letter-spacing: var(--ls-mono);
+		color: var(--c-text-3);
 	}
 </style>

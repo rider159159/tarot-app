@@ -21,28 +21,24 @@
 
 <style>
 	.question-input {
-		margin-bottom: 1rem;
+		margin-bottom: var(--sp-4);
 	}
 
 	label {
 		display: block;
-		font-weight: bold;
-		margin-bottom: 0.5rem;
+		font-family: var(--font-mono);
+		font-size: var(--fs-sm);
+		letter-spacing: var(--ls-mono);
+		color: var(--c-text-3);
+		margin-bottom: var(--sp-2);
 	}
 
 	textarea {
 		width: 100%;
-		padding: 0.75rem;
-		border: 1px solid #ddd;
-		border-radius: 8px;
+		padding: var(--sp-3);
 		font-family: inherit;
-		font-size: 1rem;
+		font-size: var(--fs-body);
+		line-height: var(--lh-body);
 		resize: vertical;
-		box-sizing: border-box;
-	}
-
-	textarea:focus {
-		outline: none;
-		border-color: #666;
 	}
 </style>

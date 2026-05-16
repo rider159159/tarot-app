@@ -26,34 +26,41 @@
 
 <style>
 	fieldset {
-		border: 1px solid #ddd;
-		border-radius: 8px;
-		padding: 1rem;
-		margin-bottom: 1rem;
+		border: 1px solid var(--c-hairline);
+		border-radius: var(--radius-0);
+		padding: var(--sp-4);
+		margin-bottom: var(--sp-4);
 	}
 
 	legend {
-		font-weight: bold;
-		padding: 0 0.5rem;
+		font-family: var(--font-mono);
+		font-size: var(--fs-sm);
+		letter-spacing: var(--ls-mono);
+		color: var(--c-text-3);
+		padding: 0 var(--sp-2);
 	}
 
 	.spread-option {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: 0.5rem;
-		padding: 0.5rem 0;
+		gap: var(--sp-2);
+		padding: var(--sp-2) 0;
 		cursor: pointer;
 	}
 
+	.spread-option input[type='radio'] {
+		accent-color: var(--c-accent);
+	}
+
 	.spread-name {
-		font-weight: 500;
+		color: var(--c-text-1);
 	}
 
 	.spread-desc {
 		width: 100%;
-		padding-left: 1.5rem;
-		color: #666;
-		font-size: 0.875rem;
+		padding-left: var(--sp-6);
+		color: var(--c-text-3);
+		font-size: var(--fs-sm);
 	}
 </style>

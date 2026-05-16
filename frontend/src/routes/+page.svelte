@@ -215,75 +215,72 @@
 
 <style>
 	main {
-		max-width: 800px;
+		max-width: var(--content-max);
 		margin: 0 auto;
-		padding: 2rem 1rem;
-		font-family: system-ui, -apple-system, sans-serif;
+		padding: var(--sp-12) var(--content-pad);
 	}
 
 	h1 {
 		text-align: center;
-		color: #333;
-		margin: 0 0 2rem;
+		font-size: var(--fs-display);
+		letter-spacing: var(--ls-display);
+		margin: 0 0 var(--sp-12);
 	}
 
 	.error {
 		text-align: center;
-		color: #a03030;
-		margin-top: 1rem;
+		color: var(--c-error);
+		margin-top: var(--sp-4);
 	}
 
 	.actions {
 		display: flex;
 		justify-content: center;
-		gap: 1rem;
-		margin-top: 1.5rem;
+		gap: var(--sp-4);
+		margin-top: var(--sp-6);
 		flex-wrap: wrap;
 	}
 
+	/* 按鈕樣板：透明底 + 1px 外框 + pill */
 	.action-btn {
-		padding: 0.5rem 1.25rem;
-		border: 1px solid #4a3060;
-		border-radius: 6px;
-		background: #4a3060;
-		color: #fff;
-		font-size: 0.9rem;
+		padding: var(--sp-2) var(--sp-6);
+		border: 1px solid var(--c-hairline-strong);
+		border-radius: var(--radius-pill);
+		background: transparent;
+		color: var(--c-text-1);
+		font-family: var(--font-mono);
+		font-size: var(--fs-sm);
+		letter-spacing: var(--ls-mono);
 		cursor: pointer;
-		font-family: inherit;
 		text-decoration: none;
+		transition: border-color var(--transition), color var(--transition);
 	}
 
 	.action-btn:hover {
-		background: #3a2050;
-	}
-
-	.action-btn.secondary {
-		background: none;
-		color: #4a3060;
-	}
-
-	.action-btn.secondary:hover {
-		background: #f0ecf5;
+		border-color: var(--c-accent);
+		color: var(--c-accent);
 	}
 
 	.toast {
 		text-align: center;
-		margin: 1rem auto 0;
-		padding: 0.6rem 1rem;
-		border-radius: 6px;
+		margin: var(--sp-4) auto 0;
+		padding: var(--sp-3) var(--sp-4);
+		border-radius: var(--radius-0);
 		max-width: 32rem;
-		font-size: 0.9rem;
+		font-family: var(--font-mono);
+		font-size: var(--fs-sm);
+		letter-spacing: var(--ls-mono);
 	}
 
 	.toast.success {
-		background: #e8f5e8;
-		color: #2d6a2d;
-		border: 1px solid #a8d8a8;
+		background: var(--c-success-bg);
+		color: var(--c-success);
+		border: 1px solid var(--c-success);
 	}
 
 	.toast.error {
-		background: #fbeaea;
-		color: #a03030;
-		border: 1px solid #e0a8a8;
+		background: var(--c-error-bg);
+		color: var(--c-error);
+		border: 1px solid var(--c-error);
 	}
 </style>

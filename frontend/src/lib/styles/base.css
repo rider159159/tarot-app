@@ -1,0 +1,122 @@
+/* ============================================================
+   Base / Reset — 全域基礎樣式
+   透過 +layout.svelte import，全站生效。
+   ============================================================ */
+
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+* {
+	margin: 0;
+}
+
+html,
+body {
+	height: 100%;
+}
+
+body {
+	background: var(--c-canvas);
+	color: var(--c-text-2);
+	font-family: var(--font-serif);
+	font-weight: var(--fw);
+	font-size: var(--fs-body);
+	line-height: var(--lh-body);
+	letter-spacing: var(--ls-body);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* ---- 標題：字重 400 + 寬字距，靠大小做層級 ---- */
+h1,
+h2,
+h3,
+h4 {
+	color: var(--c-text-1);
+	font-family: var(--font-serif);
+	font-weight: var(--fw);
+	line-height: var(--lh-tight);
+	letter-spacing: var(--ls-heading);
+}
+
+h1 {
+	font-size: var(--fs-h1);
+}
+
+h2 {
+	font-size: var(--fs-h2);
+}
+
+h3 {
+	font-size: var(--fs-h3);
+}
+
+/* ---- 連結：唯一帶紫的淺色 ---- */
+a {
+	color: var(--c-link);
+	text-decoration: none;
+	transition: color var(--transition);
+}
+
+a:hover {
+	color: var(--c-link-hover);
+}
+
+/* ---- 文字選取 ---- */
+::selection {
+	background: var(--c-accent);
+	color: var(--c-canvas);
+}
+
+/* ---- 表單元素：繼承字體，深色底 ---- */
+input,
+textarea,
+select,
+button {
+	font-family: inherit;
+	font-size: inherit;
+	color: inherit;
+}
+
+input,
+textarea,
+select {
+	background: var(--c-surface-2);
+	color: var(--c-text-1);
+	border: 1px solid var(--c-hairline);
+	border-radius: var(--radius-0);
+	transition: border-color var(--transition);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+	outline: none;
+	border-color: var(--c-accent);
+}
+
+::placeholder {
+	color: var(--c-text-4);
+}
+
+/* ---- Chrome 自動填入：蓋掉黃底（覆寫瀏覽器行為的必要 hack）---- */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+	-webkit-text-fill-color: var(--c-text-1);
+	-webkit-box-shadow: 0 0 0 100px var(--c-surface-2) inset;
+	caret-color: var(--c-text-1);
+}
+
+button {
+	cursor: pointer;
+}
+
+button:disabled {
+	cursor: not-allowed;
+}

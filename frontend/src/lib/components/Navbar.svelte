@@ -47,18 +47,18 @@
 
 <style>
 	nav {
-		background: #4a3060;
-		padding: 0 1rem;
-		font-family: system-ui, -apple-system, sans-serif;
+		background: var(--c-surface-1);
+		border-bottom: 1px solid var(--c-hairline);
+		padding: 0 var(--sp-4);
 	}
 
 	.nav-inner {
-		max-width: 800px;
+		max-width: var(--content-max);
 		margin: 0 auto;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		height: 3rem;
+		height: 3.5rem;
 	}
 
 	.nav-links {
@@ -66,72 +66,61 @@
 		margin: 0;
 		padding: 0;
 		display: flex;
-		gap: 0.25rem;
+		gap: var(--sp-2);
 	}
 
 	.nav-links a {
-		color: rgba(255, 255, 255, 0.75);
+		color: var(--c-text-3);
 		text-decoration: none;
-		font-size: 0.9rem;
-		padding: 0.5rem 0.75rem;
-		border-radius: 6px;
-		transition: background 0.15s, color 0.15s;
+		font-family: var(--font-mono);
+		font-size: var(--fs-xs);
+		letter-spacing: var(--ls-mono);
+		padding: var(--sp-2) var(--sp-3);
+		border-bottom: 1px solid transparent;
+		transition: color var(--transition), border-color var(--transition);
 	}
 
 	.nav-links a:hover {
-		color: #fff;
-		background: rgba(255, 255, 255, 0.1);
+		color: var(--c-text-1);
 	}
 
+	/* active 用月光色文字 + 底部 hairline，不用背景塊 */
 	.nav-links a.active {
-		color: #fff;
-		background: rgba(255, 255, 255, 0.15);
+		color: var(--c-accent);
+		border-bottom-color: var(--c-accent);
 	}
 
 	.user-area {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
+		gap: var(--sp-3);
 	}
 
 	.user-name {
-		color: rgba(255, 255, 255, 0.8);
-		font-size: 0.85rem;
+		color: var(--c-text-3);
+		font-family: var(--font-mono);
+		font-size: var(--fs-xs);
+		letter-spacing: var(--ls-mono);
 	}
 
-	.logout-btn {
-		background: none;
-		border: 1px solid rgba(255, 255, 255, 0.3);
-		color: rgba(255, 255, 255, 0.75);
-		font-size: 0.8rem;
-		padding: 0.25rem 0.6rem;
-		border-radius: 4px;
-		cursor: pointer;
-		font-family: inherit;
-		transition: background 0.15s, color 0.15s;
-	}
-
-	.logout-btn:hover {
-		background: rgba(255, 255, 255, 0.1);
-		color: #fff;
-	}
-
+	/* 按鈕樣板：透明底 + 1px 外框 + pill */
+	.logout-btn,
 	.auth-link {
-		color: rgba(255, 255, 255, 0.85);
+		background: transparent;
+		border: 1px solid var(--c-hairline-strong);
+		border-radius: var(--radius-pill);
+		color: var(--c-text-1);
+		font-family: var(--font-mono);
+		font-size: var(--fs-xs);
+		letter-spacing: var(--ls-mono);
+		padding: var(--sp-1) var(--sp-3);
 		text-decoration: none;
-		font-size: 0.85rem;
-		padding: 0.3rem 0.7rem;
-		border-radius: 4px;
-		border: 1px solid rgba(255, 255, 255, 0.3);
-		transition: background 0.15s, color 0.15s;
+		transition: border-color var(--transition), color var(--transition);
 	}
 
+	.logout-btn:hover,
 	.auth-link:hover {
-		background: rgba(255, 255, 255, 0.1);
-		color: #fff;
-	}
-
-	.auth-link.primary {
-		background: rgba(255, 255, 255, 0.15);
+		border-color: var(--c-accent);
+		color: var(--c-accent);
 	}
 </style>

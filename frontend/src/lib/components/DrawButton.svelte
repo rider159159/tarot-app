@@ -15,27 +15,30 @@
 </button>
 
 <style>
+	/* 按鈕樣板：透明底 + 1px 外框 + pill 圓角 + monospace 字體 */
 	.draw-btn {
 		display: block;
 		width: 100%;
-		padding: 1rem;
-		font-size: 1.125rem;
-		font-weight: bold;
-		color: white;
-		background-color: #4a3060;
-		border: none;
-		border-radius: 8px;
+		padding: var(--sp-4);
+		font-family: var(--font-mono);
+		font-size: var(--fs-body);
+		letter-spacing: var(--ls-mono);
+		color: var(--c-text-1);
+		background: transparent;
+		border: 1px solid var(--c-hairline-strong);
+		border-radius: var(--radius-pill);
 		cursor: pointer;
-		margin-bottom: 1.5rem;
-		transition: background-color 0.2s;
+		margin-bottom: var(--sp-6);
+		transition: border-color var(--transition), color var(--transition);
 	}
 
 	.draw-btn:hover:not(:disabled) {
-		background-color: #5d3d7a;
+		border-color: var(--c-accent);
+		color: var(--c-accent);
 	}
 
 	.draw-btn:disabled {
-		opacity: 0.6;
+		opacity: 0.4;
 		cursor: not-allowed;
 	}
 </style>

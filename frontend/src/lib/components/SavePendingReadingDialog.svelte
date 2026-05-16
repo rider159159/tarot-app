@@ -51,38 +51,38 @@
 	.overlay {
 		position: fixed;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.4);
+		background: rgba(14, 10, 20, 0.8);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		z-index: 1000;
-		padding: 1rem;
+		padding: var(--sp-4);
 	}
 
 	.dialog {
-		background: #fff;
-		border-radius: 10px;
-		padding: 1.5rem;
+		background: var(--c-surface-1);
+		border: 1px solid var(--c-hairline-strong);
+		border-radius: var(--radius-0);
+		padding: var(--sp-6);
 		max-width: 420px;
 		width: 100%;
-		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 	}
 
 	h2 {
-		margin: 0 0 0.5rem;
-		font-size: 1.1rem;
-		color: #4a3060;
+		margin: 0 0 var(--sp-2);
+		font-size: var(--fs-h3);
+		color: var(--c-text-1);
 	}
 
 	p {
-		margin: 0 0 1.25rem;
-		color: #555;
-		font-size: 0.9rem;
+		margin: 0 0 var(--sp-6);
+		color: var(--c-text-2);
+		font-size: var(--fs-sm);
 	}
 
 	.actions {
 		display: flex;
-		gap: 0.75rem;
+		gap: var(--sp-3);
 		justify-content: flex-end;
 	}
 
@@ -90,24 +90,27 @@
 		margin: 0;
 	}
 
+	/* 按鈕樣板：透明底 + 1px 外框 + pill */
 	.btn {
-		padding: 0.5rem 1.25rem;
-		border-radius: 6px;
-		border: 1px solid #4a3060;
-		background: #fff;
-		color: #4a3060;
-		font-size: 0.9rem;
+		padding: var(--sp-2) var(--sp-6);
+		border-radius: var(--radius-pill);
+		border: 1px solid var(--c-hairline-strong);
+		background: transparent;
+		color: var(--c-text-1);
+		font-family: var(--font-mono);
+		font-size: var(--fs-sm);
+		letter-spacing: var(--ls-mono);
 		cursor: pointer;
-		font-family: inherit;
+		transition: border-color var(--transition), color var(--transition);
 	}
 
-	.btn.primary {
-		background: #4a3060;
-		color: #fff;
+	.btn:hover:not(:disabled) {
+		border-color: var(--c-accent);
+		color: var(--c-accent);
 	}
 
 	.btn:disabled {
-		opacity: 0.6;
+		opacity: 0.4;
 		cursor: not-allowed;
 	}
 </style>
