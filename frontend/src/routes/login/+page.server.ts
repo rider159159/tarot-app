@@ -6,6 +6,10 @@ const LOAD_MESSAGES: Record<string, { kind: 'error' | 'notice'; text: string }> 
 		kind: 'error',
 		text: '信箱驗證失敗，連結可能已過期或無效。請重新發送驗證信。'
 	},
+	email_verified: {
+		kind: 'notice',
+		text: '信箱已完成驗證，請使用您的帳號密碼登入。'
+	},
 	reset_success: {
 		kind: 'notice',
 		text: '密碼已更新，請使用新密碼重新登入。'
@@ -18,8 +22,9 @@ export const load: PageServerLoad = async ({ url, locals: { safeGetSession } }) 
 	if (session) throw redirect(303, returnTo);
 
 	const errorParam = url.searchParams.get('error');
+	const noticeParam = url.searchParams.get('notice');
 	const resetParam = url.searchParams.get('reset');
-	const key = resetParam === 'success' ? 'reset_success' : errorParam;
+	const key = resetParam === 'success' ? 'reset_success' : noticeParam || errorParam;
 
 	const matched = key ? LOAD_MESSAGES[key] : undefined;
 	return {
