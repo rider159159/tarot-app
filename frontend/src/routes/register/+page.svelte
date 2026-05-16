@@ -2,19 +2,23 @@
 	import { enhance } from '$app/forms';
 	import type { ActionData, PageData } from './$types';
 	import ResendVerification from '$lib/components/ResendVerification.svelte';
+	import Seo from '$lib/components/Seo.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let returnTo = $derived(form?.returnTo ?? data.returnTo ?? '/');
 	let submitting = $state(false);
 	let password = $state('');
+	let confirmPassword = $state('');
 
 	let passwordTooShort = $derived(password.length > 0 && password.length < 8);
+	let mismatch = $derived(confirmPassword.length > 0 && password !== confirmPassword);
 </script>
 
-<svelte:head>
-	<title>註冊 - 塔羅占卜</title>
-</svelte:head>
+<Seo
+	title="註冊"
+	description="免費註冊塔羅占卜帳號，開始記錄並管理你的塔羅牌占卜歷程。"
+/>
 
 <main>
 	<div class="auth-card">
@@ -64,12 +68,29 @@
 					<span class="hint">密碼至少需要 8 個字元</span>
 				{/if}
 			</label>
+			<label>
+				確認密碼
+				<input
+					type="password"
+					name="confirm_password"
+					bind:value={confirmPassword}
+					required
+					minlength="8"
+					disabled={submitting}
+				/>
+				{#if mismatch}
+					<span class="hint">兩次輸入的密碼不一致</span>
+				{/if}
+			</label>
 			{#if form?.success}
 				<p class="success">註冊成功！請查收驗證信，點擊信中連結完成註冊。</p>
 			{:else if form?.error}
 				<p class="error">{form.error}</p>
 			{/if}
-			<button type="submit" disabled={submitting || !!form?.success}>
+			<button
+				type="submit"
+				disabled={submitting || !!form?.success || passwordTooShort || mismatch}
+			>
 				{submitting ? '註冊中...' : '註冊'}
 			</button>
 		</form>
