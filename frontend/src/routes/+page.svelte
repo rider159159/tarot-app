@@ -14,16 +14,23 @@
 	import QuestionInput from '$lib/components/QuestionInput.svelte';
 	import DrawButton from '$lib/components/DrawButton.svelte';
 	import ReadingDisplay from '$lib/components/ReadingDisplay.svelte';
+	import CardPicker from '$lib/components/CardPicker.svelte';
 	import AnonymousCta from '$lib/components/AnonymousCta.svelte';
 	import SavePendingReadingDialog from '$lib/components/SavePendingReadingDialog.svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
+	// 抽牌模式：'qa' 一般問答（直接顯示結果）/ 'interactive' 模擬抽牌（互動選牌）
+	let drawMode: 'qa' | 'interactive' = $state('qa');
+	// 模擬抽牌階段：'idle' 尚未抽 / 'picking' 互動選牌中（牌已抽好、等使用者翻）
+	let interactivePhase: 'idle' | 'picking' = $state('idle');
+
 	let selectedSpread: SpreadType = $state('single');
 	let question: string = $state('');
 	let loading: boolean = $state(false);
 	let reading: ReadingResult | null = $state(null);
+
 	let copyStatus: CopyStatus = $state('idle');
 	let pendingForDialog: PendingReading | null = $state(null);
 	let showSaveDialog: boolean = $state(false);
@@ -36,26 +43,25 @@
 		toastTimer = setTimeout(() => (toast = null), ms);
 	}
 
-	// 1. Logged-in draw response
-	$effect(() => {
-		if (form?.reading) {
-			reading = mapApiResponse(form.reading);
-		}
-	});
+	// 模擬抽牌：表單回傳的牌結果先暫存於此（不直接顯示），
+	// 待使用者在牌海翻完全部卡片，才正式設給 reading。
+	let pendingReadingResult: ReadingResult | null = $state(null);
 
-	// 2. Anonymous draw → persist to localStorage + render synthetic result
-	$effect(() => {
+	// 把 draw action 的回傳轉成 ReadingResult；未登入時順便寫 localStorage 暫存。
+	// 回傳 null 表示這次 form 沒有抽牌結果（可能是其他 action 或錯誤）。
+	function readDrawResult(): ReadingResult | null {
+		if (form?.reading) {
+			return mapApiResponse(form.reading);
+		}
 		if (form?.anonymousReading && form?.clientToken) {
 			const ar = form.anonymousReading;
-			const pending: PendingReading = {
+			savePending({
 				clientToken: form.clientToken,
 				spreadType: ar.spreadType,
 				question: ar.question ?? null,
 				drawnAt: ar.drawnAt,
 				cards: ar.cards
-			};
-			savePending(pending);
-			// Build an ApiReadingResponse-shaped object so mapApiResponse works.
+			});
 			const synthetic: ApiReadingResponse = {
 				id: '',
 				spreadType: ar.spreadType,
@@ -63,9 +69,23 @@
 				cards: ar.cards,
 				createdAt: ar.drawnAt
 			};
-			reading = mapApiResponse(synthetic);
+			return mapApiResponse(synthetic);
 		}
-	});
+		return null;
+	}
+
+	// draw 表單送出後呼叫：依「送出當下」的模式決定直接顯示或進互動選牌。
+	// 不放 $effect — $effect 的依賴集合會隨條件分支變動，曾導致模式判斷失準。
+	function onDrawResult() {
+		const result = readDrawResult();
+		if (!result) return;
+		if (drawMode === 'interactive') {
+			pendingReadingResult = result;
+			interactivePhase = 'picking';
+		} else {
+			reading = result;
+		}
+	}
 
 	// 3. Import succeeded
 	$effect(() => {
@@ -115,6 +135,25 @@
 	function handleDrawAgain() {
 		reading = null;
 		copyStatus = 'idle';
+		pendingReadingResult = null;
+		interactivePhase = 'idle';
+	}
+
+	// 模擬抽牌：牌海翻完全部卡片 → 正式呈現結果。
+	// 留一點時間讓最後一張翻牌動畫播完再切到 ReadingDisplay。
+	function handlePickComplete() {
+		setTimeout(() => {
+			if (pendingReadingResult) reading = pendingReadingResult;
+			interactivePhase = 'idle';
+		}, 700);
+	}
+
+	// 切換抽牌模式：清掉進行中的互動狀態，避免殘留
+	function switchMode(mode: 'qa' | 'interactive') {
+		if (mode === drawMode) return;
+		drawMode = mode;
+		interactivePhase = 'idle';
+		pendingReadingResult = null;
 	}
 
 	function getSpreadTypeForApi(spread: SpreadType): string {
@@ -145,7 +184,33 @@
 <main>
 	<h1>塔羅占卜</h1>
 
-	{#if !reading}
+	{#if !reading && interactivePhase === 'idle'}
+		<!-- 抽牌模式切換：一般問答（預設）/ 模擬抽牌 -->
+		<div class="mode-tabs" role="tablist" aria-label="抽牌模式">
+			<button
+				type="button"
+				role="tab"
+				aria-selected={drawMode === 'qa'}
+				class="mode-tab"
+				class:active={drawMode === 'qa'}
+				disabled={loading}
+				onclick={() => switchMode('qa')}
+			>
+				一般問答
+			</button>
+			<button
+				type="button"
+				role="tab"
+				aria-selected={drawMode === 'interactive'}
+				class="mode-tab"
+				class:active={drawMode === 'interactive'}
+				disabled={loading}
+				onclick={() => switchMode('interactive')}
+			>
+				模擬抽牌
+			</button>
+		</div>
+
 		<form
 			method="POST"
 			action="?/draw"
@@ -154,6 +219,8 @@
 				return async ({ update }) => {
 					loading = false;
 					await update();
+					// update() 後 form 已是最新 — 依當下模式決定顯示或進選牌
+					onDrawResult();
 				};
 			}}
 		>
@@ -168,7 +235,18 @@
 		{#if form?.error}
 			<p class="error">{form.error}</p>
 		{/if}
-	{:else}
+	{:else if interactivePhase === 'picking' && pendingReadingResult}
+		<!-- 模擬抽牌：牌已抽好，使用者從牌海點選翻牌。
+		     需點選張數 = 後端實際抽到的張數，不靠牌陣查表。 -->
+		<p class="picker-hint">
+			憑直覺從牌海中點選 {pendingReadingResult.cards.length} 張
+		</p>
+		<CardPicker
+			needed={pendingReadingResult.cards.length}
+			results={pendingReadingResult.cards}
+			oncomplete={handlePickComplete}
+		/>
+	{:else if reading}
 		<ReadingDisplay {reading} />
 		<div class="actions">
 			<button class="action-btn" onclick={handleDrawAgain}>再抽一次</button>
@@ -231,6 +309,50 @@
 		text-align: center;
 		color: var(--c-error);
 		margin-top: var(--sp-4);
+	}
+
+	/* 模式切換 tab：兩段式，底線標示 active */
+	.mode-tabs {
+		display: flex;
+		gap: var(--sp-2);
+		justify-content: center;
+		margin-bottom: var(--sp-8);
+		border-bottom: 1px solid var(--c-hairline);
+	}
+
+	.mode-tab {
+		padding: var(--sp-3) var(--sp-6);
+		background: transparent;
+		border: none;
+		border-bottom: 2px solid transparent;
+		color: var(--c-text-3);
+		font-family: var(--font-mono);
+		font-size: var(--fs-sm);
+		letter-spacing: var(--ls-mono);
+		cursor: pointer;
+		margin-bottom: -1px;
+		transition: color var(--transition), border-color var(--transition);
+	}
+
+	.mode-tab:hover:not(:disabled) {
+		color: var(--c-text-1);
+	}
+
+	.mode-tab.active {
+		color: var(--c-accent);
+		border-bottom-color: var(--c-accent);
+	}
+
+	.mode-tab:disabled {
+		cursor: default;
+		opacity: 0.5;
+	}
+
+	.picker-hint {
+		text-align: center;
+		color: var(--c-text-2);
+		font-size: var(--fs-sm);
+		margin: 0 0 var(--sp-6);
 	}
 
 	.actions {
