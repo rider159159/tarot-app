@@ -1,6 +1,7 @@
 import type {
 	SpreadConfig,
 	SpreadType,
+	FixedSpreadType,
 	DrawnCard,
 	Orientation,
 	ReadingResult
@@ -84,7 +85,8 @@ const weeklyFortuneSpread: SpreadConfig = {
 	]
 };
 
-export const spreadConfigs: Record<SpreadType, SpreadConfig> = {
+// 'custom' has no preset config — its card count is chosen at draw time.
+export const spreadConfigs: Record<FixedSpreadType, SpreadConfig> = {
 	single: singleSpread,
 	'three-card-time': threeCardTimeSpread,
 	'three-card-problem': threeCardProblemSpread,
@@ -129,6 +131,11 @@ function randomOrientation(): Orientation {
 // === Drawing Function ===
 
 export function drawCards(spreadType: SpreadType, question: string): ReadingResult {
+	// Custom spreads draw a user-chosen number of cards — that path always goes
+	// through the backend API, never this client-side helper.
+	if (spreadType === 'custom') {
+		throw new Error('自定義牌陣不支援前端 drawCards，請改用後端抽牌 API');
+	}
 	const config = spreadConfigs[spreadType];
 	if (!config) {
 		throw new Error(`Unknown spread type: ${spreadType}`);
