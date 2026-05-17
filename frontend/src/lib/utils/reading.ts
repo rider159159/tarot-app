@@ -37,7 +37,8 @@ const spreadNameMap: Record<string, string> = {
 	'three-card-problem': '三張牌 — 問題對策',
 	'three-card-linear': '三張牌 — 線性展開',
 	'celtic-cross': '塞爾特十字',
-	'weekly-fortune': '每週週運'
+	'weekly-fortune': '每週週運',
+	custom: '自定義牌陣'
 };
 
 export function getSpreadName(spreadType: string): string {

@@ -8,9 +8,9 @@ namespace TarotApi.Services;
 
 public class ReadingService(TarotDbContext db, TarotService tarotService)
 {
-    public async Task<ReadingResponseDto> CreateReading(Guid userId, SpreadType spreadType, string? question)
+    public async Task<ReadingResponseDto> CreateReading(Guid userId, SpreadType spreadType, string? question, int customCardCount = 0)
     {
-        var drawnCards = tarotService.DrawCards(spreadType);
+        var drawnCards = tarotService.DrawCards(spreadType, customCardCount);
 
         // Build the JSONB payload for DB storage (compact format)
         var cardsPayload = drawnCards.Select(dc => new
@@ -39,12 +39,12 @@ public class ReadingService(TarotDbContext db, TarotService tarotService)
     // Anonymous draw — no DB write. Result lives only in the HTTP response;
     // the client persists it in localStorage along with a self-generated
     // clientToken and may later POST it to /api/readings/import.
-    public AnonymousDrawResponseDto DrawAnonymous(SpreadType spreadType, string? question)
+    public AnonymousDrawResponseDto DrawAnonymous(SpreadType spreadType, string? question, int customCardCount = 0)
     {
         if (spreadType == SpreadType.WeeklyFortune)
             throw new ReadingImportException("週運需要登入才能抽", "AUTH_REQUIRED");
 
-        var drawnCards = tarotService.DrawCards(spreadType);
+        var drawnCards = tarotService.DrawCards(spreadType, customCardCount);
         return new AnonymousDrawResponseDto
         {
             SpreadType = SpreadTypeToString(spreadType),
@@ -69,12 +69,22 @@ public class ReadingService(TarotDbContext db, TarotService tarotService)
         }
 
         var spreadType = ParseImportableSpread(dto.SpreadType);
-        var positions = TarotService.GetPositions(spreadType);
-        var expectedCount = spreadType == SpreadType.Single ? positions.Length : positions.Length + 1;
-        if (dto.Cards.Count != expectedCount)
-            throw new ReadingImportException(
-                $"卡片數量不符（預期 {expectedCount}，實際 {dto.Cards.Count}）",
-                "INVALID_CARD_COUNT");
+        if (spreadType == SpreadType.Custom)
+        {
+            if (dto.Cards.Count is < 1 or > 10)
+                throw new ReadingImportException(
+                    $"自定義牌陣張數需介於 1～10（實際 {dto.Cards.Count}）",
+                    "INVALID_CARD_COUNT");
+        }
+        else
+        {
+            var positions = TarotService.GetPositions(spreadType);
+            var expectedCount = spreadType == SpreadType.Single ? positions.Length : positions.Length + 1;
+            if (dto.Cards.Count != expectedCount)
+                throw new ReadingImportException(
+                    $"卡片數量不符（預期 {expectedCount}，實際 {dto.Cards.Count}）",
+                    "INVALID_CARD_COUNT");
+        }
 
         foreach (var card in dto.Cards)
         {
@@ -281,6 +291,7 @@ public class ReadingService(TarotDbContext db, TarotService tarotService)
         SpreadType.ThreeCardLinear => "three-card-linear",
         SpreadType.CelticCross => "celtic-cross",
         SpreadType.WeeklyFortune => "weekly-fortune",
+        SpreadType.Custom => "custom",
         _ => throw new ArgumentOutOfRangeException(nameof(type))
     };
 
@@ -293,23 +304,23 @@ public class ReadingService(TarotDbContext db, TarotService tarotService)
         "three-card-problem" => SpreadType.ThreeCardProblem,
         "three-card-linear" => SpreadType.ThreeCardLinear,
         "celtic-cross" => SpreadType.CelticCross,
+        "custom" => SpreadType.Custom,
         _ => throw new ReadingImportException($"無效的牌陣類型：{s}", "INVALID_SPREAD")
     };
 
     private static List<TarotService.DrawnCardResult> ResolveCards(Reading reading)
     {
-        var cardsJson = reading.Cards.RootElement;
-        var results = new List<TarotService.DrawnCardResult>();
+        var elements = reading.Cards.RootElement.EnumerateArray().ToList();
 
-        foreach (var element in cardsJson.EnumerateArray())
+        // Custom spreads have no preset positions — numbered slots sized to the
+        // stored card count. Fixed spreads resolve positions from their config.
+        SpreadPosition[] positions;
+        if (reading.SpreadType == "custom")
         {
-            var cardId = element.GetProperty("card_id").GetString()!;
-            var orientation = element.GetProperty("orientation").GetString()!;
-            var positionIndex = element.GetProperty("position_index").GetInt32();
-
-            var card = TarotCards.GetById(cardId);
-            if (card is null) continue;
-
+            positions = TarotService.BuildCustomPositions(elements.Count);
+        }
+        else
+        {
             var spreadType = reading.SpreadType switch
             {
                 "single" => SpreadType.Single,
@@ -321,8 +332,19 @@ public class ReadingService(TarotDbContext db, TarotService tarotService)
                 "weekly-fortune" => SpreadType.WeeklyFortune,
                 _ => SpreadType.Single
             };
+            positions = TarotService.GetPositions(spreadType);
+        }
 
-            var positions = TarotService.GetPositions(spreadType);
+        var results = new List<TarotService.DrawnCardResult>();
+        foreach (var element in elements)
+        {
+            var cardId = element.GetProperty("card_id").GetString()!;
+            var orientation = element.GetProperty("orientation").GetString()!;
+            var positionIndex = element.GetProperty("position_index").GetInt32();
+
+            var card = TarotCards.GetById(cardId);
+            if (card is null) continue;
+
             var position = positionIndex < positions.Length
                 ? positions[positionIndex]
                 : new SpreadPosition(positionIndex, "你的感受", "你對此問題最真實的內心感受");

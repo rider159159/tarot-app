@@ -41,6 +41,7 @@
 	let interactivePhase: 'idle' | 'picking' = $state('idle');
 
 	let selectedSpread: SpreadType = $state('single');
+	let customCardCount: number = $state(3);
 	let question: string = $state('');
 	let loading: boolean = $state(false);
 	let reading: ReadingResult | null = $state(null);
@@ -175,6 +176,7 @@
 		if (spread === 'three-card-problem') return 'ThreeCardProblem';
 		if (spread === 'three-card-linear') return 'ThreeCardLinear';
 		if (spread === 'celtic-cross') return 'CelticCross';
+		if (spread === 'custom') return 'Custom';
 		return 'Single';
 	}
 
@@ -242,8 +244,17 @@
 		>
 			<input type="hidden" name="spreadType" value={getSpreadTypeForApi(selectedSpread)} />
 			<input type="hidden" name="question" value={question} />
+			<input
+				type="hidden"
+				name="cardCount"
+				value={selectedSpread === 'custom' ? customCardCount : ''}
+			/>
 
-			<SpreadSelector bind:selected={selectedSpread} disabled={loading} />
+			<SpreadSelector
+				bind:selected={selectedSpread}
+				bind:customCardCount={customCardCount}
+				disabled={loading}
+			/>
 			<QuestionInput bind:value={question} disabled={loading} />
 			<DrawButton {loading} />
 		</form>

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using TarotApi.Extensions;
+using TarotApi.Models;
 using TarotApi.Models.Dtos;
 using TarotApi.Services;
 
@@ -15,8 +16,15 @@ public class ReadingController(
     [HttpPost]
     public async Task<ActionResult<ReadingResponseDto>> CreateReading([FromBody] ReadingCreateDto dto)
     {
+        if (dto.SpreadType == SpreadType.Custom && dto.CardCount is null or < 1 or > 10)
+            return BadRequest(new ErrorResponseDto
+            {
+                Error = "自定義牌陣張數需介於 1 到 10 之間",
+                Code = "INVALID_CARD_COUNT"
+            });
+
         var userId = User.GetUserId();
-        var result = await readingService.CreateReading(userId, dto.SpreadType, dto.Question);
+        var result = await readingService.CreateReading(userId, dto.SpreadType, dto.Question, dto.CardCount ?? 0);
         return Created($"/api/readings/{result.Id}", result);
     }
 

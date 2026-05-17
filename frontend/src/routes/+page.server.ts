@@ -18,6 +18,10 @@ export const actions: Actions = {
 		const data = await request.formData();
 		const spreadType = data.get('spreadType') as string;
 		const question = (data.get('question') as string | null) || null;
+		// cardCount is only sent (non-empty) for the custom spread.
+		const cardCountRaw = data.get('cardCount') as string | null;
+		const cardCount =
+			cardCountRaw && !Number.isNaN(Number(cardCountRaw)) ? Number(cardCountRaw) : null;
 
 		const { session } = await locals.safeGetSession();
 
@@ -27,7 +31,8 @@ export const actions: Actions = {
 			try {
 				const result = await api.post<ApiReadingResponse>('/api/readings', {
 					spreadType,
-					question
+					question,
+					cardCount
 				});
 				return { reading: result };
 			} catch (err) {
@@ -42,7 +47,7 @@ export const actions: Actions = {
 			const res = await fetch(`${baseUrl}/api/tarot/draw`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ spreadType, question })
+				body: JSON.stringify({ spreadType, question, cardCount })
 			});
 
 			if (!res.ok) {

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using TarotApi.Data;
+using TarotApi.Models;
 using TarotApi.Models.Dtos;
 using TarotApi.Services;
 
@@ -61,7 +62,14 @@ public class TarotController(ReadingService readingService) : ControllerBase
     [EnableRateLimiting("anonymous-draw")]
     public ActionResult<AnonymousDrawResponseDto> Draw([FromBody] AnonymousDrawDto dto)
     {
-        var result = readingService.DrawAnonymous(dto.SpreadType, dto.Question);
+        if (dto.SpreadType == SpreadType.Custom && dto.CardCount is null or < 1 or > 10)
+            return BadRequest(new ErrorResponseDto
+            {
+                Error = "自定義牌陣張數需介於 1 到 10 之間",
+                Code = "INVALID_CARD_COUNT"
+            });
+
+        var result = readingService.DrawAnonymous(dto.SpreadType, dto.Question, dto.CardCount ?? 0);
         return Ok(result);
     }
 }

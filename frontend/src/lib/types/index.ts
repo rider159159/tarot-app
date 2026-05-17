@@ -19,7 +19,12 @@ export type SpreadType =
 	| 'three-card-problem'
 	| 'three-card-linear'
 	| 'celtic-cross'
-	| 'weekly-fortune';
+	| 'weekly-fortune'
+	| 'custom';
+
+// Spread types that have a fixed, preset configuration in `spreadConfigs`.
+// 'custom' is excluded — its card count is chosen at draw time.
+export type FixedSpreadType = Exclude<SpreadType, 'custom'>;
 
 export interface SpreadPosition {
 	index: number;

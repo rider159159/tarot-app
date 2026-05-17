@@ -20,7 +20,8 @@ public class PromptBuilder
         ["three-card-problem"] = "三張牌 — 問題對策",
         ["three-card-linear"] = "三張牌 — 線性展開",
         ["celtic-cross"] = "凱爾特十字",
-        ["weekly-fortune"] = "每週週運"
+        ["weekly-fortune"] = "每週週運",
+        ["custom"] = "自定義牌陣"
     };
 
     public ExportPayloadDto BuildSingleExport(Reading reading) => new()
@@ -41,11 +42,15 @@ public class PromptBuilder
 
     public ExportReadingDto BuildReadingDto(Reading reading)
     {
-        var spreadEnum = ParseSpreadType(reading.SpreadType);
-        var positions = TarotService.GetPositions(spreadEnum);
+        var cardElements = reading.Cards.RootElement.EnumerateArray().ToList();
+
+        // Custom spreads have no preset positions — numbered slots sized to the card count.
+        var positions = reading.SpreadType == "custom"
+            ? TarotService.BuildCustomPositions(cardElements.Count)
+            : TarotService.GetPositions(ParseSpreadType(reading.SpreadType));
 
         var cards = new List<ExportCardDto>();
-        foreach (var el in reading.Cards.RootElement.EnumerateArray())
+        foreach (var el in cardElements)
         {
             var cardId = el.GetProperty("card_id").GetString()!;
             var orientation = el.GetProperty("orientation").GetString()!;
