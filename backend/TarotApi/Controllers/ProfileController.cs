@@ -13,10 +13,7 @@ public class ProfileController(ProfileService profileService) : ControllerBase
     public async Task<ActionResult<ProfileDto>> GetProfile()
     {
         var userId = User.GetUserId();
-        var profile = await profileService.GetProfile(userId);
-
-        if (profile is null)
-            return NotFound(new ErrorResponseDto { Error = "找不到使用者資料", Code = "NOT_FOUND" });
+        var profile = await profileService.GetProfile(userId, User.GetEmail());
         return Ok(profile);
     }
 

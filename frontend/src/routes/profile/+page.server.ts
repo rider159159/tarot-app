@@ -1,4 +1,4 @@
-import { fail } from '@sveltejs/kit';
+import { fail, error } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { createServerApiClient, ApiError } from '$lib/server/api';
 import { fetchSingleExport } from '$lib/server/export';
@@ -9,18 +9,39 @@ import type {
 	ApiReadingResponse
 } from '$lib/types';
 
+// Empty stats used when the stats endpoint fails — the page degrades to
+// "no stats yet" rather than 500ing on a non-critical request.
+const EMPTY_STATS: ApiReadingStatsResponse = {
+	totalCount: 0,
+	topCards: [],
+	spreadUsage: [],
+	lastReadingAt: null
+};
+
 export const load: PageServerLoad = async ({ locals }) => {
 	const { session } = await locals.safeGetSession();
 	const api = createServerApiClient(session!.access_token);
 
-	const [profile, stats, weeklyFortune] = await Promise.all([
+	// allSettled (not Promise.all) so a single failing request doesn't take
+	// down the whole page. profile is critical — if it fails we still 500;
+	// stats and weeklyFortune degrade gracefully.
+	const [profileResult, statsResult, weeklyResult] = await Promise.allSettled([
 		api.get<ApiProfileResponse>('/api/profile'),
 		api.get<ApiReadingStatsResponse>('/api/readings/stats'),
 		api.get<ApiWeeklyFortuneResponse>('/api/readings/weekly-fortune')
-			.catch((): ApiWeeklyFortuneResponse => ({ reading: null, canDraw: true }))
 	]);
 
-	return { profile, stats, weeklyFortune };
+	if (profileResult.status === 'rejected') {
+		throw error(502, '無法載入使用者資料，請稍後再試');
+	}
+
+	const stats = statsResult.status === 'fulfilled' ? statsResult.value : EMPTY_STATS;
+	const weeklyFortune: ApiWeeklyFortuneResponse =
+		weeklyResult.status === 'fulfilled'
+			? weeklyResult.value
+			: { reading: null, canDraw: true };
+
+	return { profile: profileResult.value, stats, weeklyFortune };
 };
 
 export const actions: Actions = {
