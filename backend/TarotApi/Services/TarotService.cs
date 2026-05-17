@@ -53,9 +53,11 @@ public class TarotService
 
     public record DrawnCardResult(TarotCardInfo Card, string Orientation, SpreadPosition Position);
 
-    public List<DrawnCardResult> DrawCards(SpreadType spreadType)
+    public List<DrawnCardResult> DrawCards(SpreadType spreadType, int customCardCount = 0)
     {
-        var positions = SpreadConfigs[spreadType];
+        var positions = spreadType == SpreadType.Custom
+            ? BuildCustomPositions(customCardCount)
+            : SpreadConfigs[spreadType];
         var allCards = TarotCards.All;
 
         // Fisher-Yates shuffle using cryptographic RNG
@@ -66,7 +68,9 @@ public class TarotService
             (indices[i], indices[j]) = (indices[j], indices[i]);
         }
 
-        var totalCards = spreadType == SpreadType.Single ? positions.Length : positions.Length + 1;
+        // Single and Custom draw exactly their positions; other spreads append a feeling card.
+        var hasFeelingCard = spreadType != SpreadType.Single && spreadType != SpreadType.Custom;
+        var totalCards = hasFeelingCard ? positions.Length + 1 : positions.Length;
         var results = new List<DrawnCardResult>(totalCards);
         for (var i = 0; i < positions.Length; i++)
         {
@@ -75,8 +79,7 @@ public class TarotService
             results.Add(new DrawnCardResult(card, orientation, positions[i]));
         }
 
-        // Append feeling card for non-Single spreads
-        if (spreadType != SpreadType.Single)
+        if (hasFeelingCard)
         {
             var feelingCard = allCards[indices[positions.Length]];
             var feelingOrientation = RandomNumberGenerator.GetInt32(2) == 0 ? "upright" : "reversed";
@@ -88,4 +91,14 @@ public class TarotService
     }
 
     public static SpreadPosition[] GetPositions(SpreadType spreadType) => SpreadConfigs[spreadType];
+
+    // Custom spreads have no preset position semantics — positions are just
+    // numbered slots; the user interprets each card's meaning themselves.
+    public static SpreadPosition[] BuildCustomPositions(int count)
+    {
+        var positions = new SpreadPosition[count];
+        for (var i = 0; i < count; i++)
+            positions[i] = new SpreadPosition(i, $"第 {i + 1} 張", string.Empty);
+        return positions;
+    }
 }

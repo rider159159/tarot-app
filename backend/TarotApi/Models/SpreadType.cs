@@ -10,5 +10,6 @@ public enum SpreadType
     ThreeCardProblem,
     ThreeCardLinear,
     CelticCross,
-    WeeklyFortune
+    WeeklyFortune,
+    Custom
 }
