@@ -1,134 +1,134 @@
-# Tarot App — Claude Context
+# Tarot App — Claude 開發脈絡
 
-## Overview
-Monorepo with a SvelteKit frontend and .NET 8 backend, deployed on Zeabur.
+## 總覽
+單一 repo（monorepo），包含 SvelteKit 前端與 .NET 8 後端，部署於 Zeabur。
 
-## Architecture
+## 架構
 
 ```
 tarot-app/
 ├── frontend/              SvelteKit 2 + Svelte 5 (adapter-node, ssr=false)
 │   ├── src/
-│   │   ├── hooks.server.ts       Auth middleware & route guards
-│   │   ├── routes/               Pages (see Frontend Routes below)
+│   │   ├── hooks.server.ts       認證 middleware 與路由守衛
+│   │   ├── routes/               頁面（見下方「前端路由」）
 │   │   └── lib/
-│   │       ├── supabase.ts       Supabase browser client
-│   │       ├── server/api.ts     Server-side API client
-│   │       ├── components/       UI components (6 files)
-│   │       ├── tarot/            Card data, spreads, images
-│   │       ├── types/            TypeScript definitions
-│   │       └── utils/            Reading helpers
-│   └── svelte.config.js          adapter-node, builds to build/
+│   │       ├── supabase.ts       Supabase 瀏覽器端 client
+│   │       ├── server/api.ts     伺服器端 API client
+│   │       ├── components/       UI 元件（6 個檔案）
+│   │       ├── tarot/            牌卡資料、牌陣、圖片
+│   │       ├── types/            TypeScript 型別定義
+│   │       └── utils/            占卜相關 helper
+│   └── svelte.config.js          adapter-node，建置輸出至 build/
 ├── backend/               ASP.NET Core 8 + EF Core + Npgsql
 │   └── TarotApi/
-│       ├── Program.cs            DI, CORS, JWT, middleware pipeline
-│       ├── Controllers/          4 controllers (Health, Tarot, Reading, Profile)
-│       ├── Services/             TarotService, ReadingService, ProfileService
-│       ├── Models/               Entities, DTOs, enums
-│       ├── Data/                 EF Core context, 78-card seed data
+│       ├── Program.cs            DI、CORS、JWT、middleware pipeline
+│       ├── Controllers/          4 個 controller（Health、Tarot、Reading、Profile）
+│       ├── Services/             TarotService、ReadingService、ProfileService
+│       ├── Models/               entity、DTO、enum
+│       ├── Data/                 EF Core context、78 張牌種子資料
 │       └── Middleware/           ExceptionHandlingMiddleware
-├── database/              Supabase migrations
-├── docker-compose.yml     Local dev only
-└── .env                   Shared env vars (frontend/.env symlinks here)
+├── database/              Supabase migration
+├── docker-compose.yml     僅供本地開發
+└── .env                   共用環境變數（frontend/.env 為其符號連結）
 ```
 
-## Zeabur Deployment
-| Service | Name | Public URL | Port |
+## Zeabur 部署
+| 服務 | 名稱 | 公開 URL | Port |
 |---------|------|-----------|------|
-| Frontend | tarot-app-uram | rtarot.zeabur.app | 8080 |
-| Backend | tarot-app-ist | rtarot-api.zeabur.app | 8080 |
+| 前端 | tarot-app-uram | rtarot.zeabur.app | 8080 |
+| 後端 | tarot-app-ist | rtarot-api.zeabur.app | 8080 |
 
-Health check: `GET https://rtarot-api.zeabur.app/api/health`
+健康檢查：`GET https://rtarot-api.zeabur.app/api/health`
 
-## Local Development
+## 本地開發
 
-Prerequisites: Node.js 22.x (per `.nvmrc`), pnpm 9.15.4, .NET 8 SDK
+前置需求：Node.js 22.x（依 `.nvmrc`）、pnpm 9.15.4、.NET 8 SDK
 
 ```bash
-# Option 1: Docker (recommended, starts both services)
+# 方式 1：Docker（建議，會同時啟動兩個服務）
 docker compose up --build
-# Frontend → http://localhost:5173  (Vite dev server, hot reload)
-# Backend  → http://localhost:5098  (dotnet watch, live reload)
-# Swagger  → http://localhost:5098/swagger
+# 前端 → http://localhost:5173  (Vite dev server，hot reload)
+# 後端 → http://localhost:5098  (dotnet watch，live reload)
+# Swagger → http://localhost:5098/swagger
 ```
 
 ```bash
-# Option 2: Run individually
+# 方式 2：個別啟動
 cd frontend && pnpm install && pnpm dev
 cd backend && dotnet watch run --project TarotApi
 ```
 
-Useful commands:
+常用指令：
 ```bash
-cd frontend && pnpm check    # TypeScript verification
-cd frontend && pnpm build    # Production build → build/ with 200.html SPA fallback
+cd frontend && pnpm check    # TypeScript 檢查
+cd frontend && pnpm build    # production 建置 → build/，含 200.html SPA fallback
 ```
 
-## Environment Variables
+## 環境變數
 
-### Frontend (build-time, baked in by Vite)
+### 前端（build-time，由 Vite 在建置時內嵌）
 ```
 PUBLIC_SUPABASE_URL=
 PUBLIC_SUPABASE_ANON_KEY=
 ```
 
-### Frontend (server-side, runtime)
+### 前端（伺服器端，runtime）
 ```
-INTERNAL_API_URL=            # Backend URL for server-side API calls (default: http://localhost:5098)
-```
-
-### Backend (runtime)
-```
-PUBLIC_SUPABASE_URL=          # Also used for JWKS endpoint
-SUPABASE_JWT_SECRET=          # Required at startup
-SUPABASE_DB_CONNECTION_STRING= # PostgreSQL connection string
-ALLOWED_ORIGINS=              # Comma-separated (e.g. https://rtarot.zeabur.app)
+INTERNAL_API_URL=            # 伺服器端呼叫 API 用的後端 URL（預設：http://localhost:5098）
 ```
 
-`.env` at repo root; `frontend/.env` is a symlink to `../.env`.
+### 後端（runtime）
+```
+PUBLIC_SUPABASE_URL=          # 同時用於 JWKS endpoint
+SUPABASE_JWT_SECRET=          # 啟動時必須提供
+SUPABASE_DB_CONNECTION_STRING= # PostgreSQL 連線字串
+ALLOWED_ORIGINS=              # 以逗號分隔（例如 https://rtarot.zeabur.app）
+```
 
-## Frontend Routes
+`.env` 位於 repo 根目錄；`frontend/.env` 是指向 `../.env` 的符號連結。
 
-| Route | Page | Description |
+## 前端路由
+
+| 路由 | 頁面 | 說明 |
 |-------|------|-------------|
-| `/` | Home | Tarot reading (spread selection, question, draw) |
-| `/login` | Login | Email/password login |
-| `/register` | Register | New account registration |
-| `/history` | History | Paginated reading history (PAGE_SIZE=10) with delete |
-| `/profile` | Profile | User info, reading stats, name editing |
-| `/auth/callback` | — | OAuth callback (exchanges code for session) |
-| `/auth/logout` | — | POST endpoint, signs out and redirects to /login |
+| `/` | 首頁 | 塔羅占卜（選牌陣、輸入問題、抽牌） |
+| `/login` | 登入 | Email／密碼登入 |
+| `/register` | 註冊 | 新帳號註冊 |
+| `/history` | 歷史紀錄 | 分頁的占卜歷史（PAGE_SIZE=10），可刪除 |
+| `/profile` | 個人資料 | 使用者資訊、占卜統計、修改名稱 |
+| `/auth/callback` | — | OAuth callback（用 code 換 session） |
+| `/auth/logout` | — | POST endpoint，登出後導向 /login |
 
-Auth routing: unauthenticated users redirected to `/login`; authenticated users redirected away from `/login` and `/register`.
+認證路由規則：未登入使用者導向 `/login`；已登入使用者從 `/login`、`/register` 導離。
 
-## Backend API Endpoints
-All require `Authorization: Bearer <supabase-jwt>` except health.
+## 後端 API endpoint
+除健康檢查外，全部需要 `Authorization: Bearer <supabase-jwt>`。
 
-| Method | Path | Auth | Description |
+| Method | 路徑 | 需認證 | 說明 |
 |--------|------|------|-------------|
-| GET | /api/health | No | Health check |
-| GET | /api/tarot/cards | Yes | List all 78 cards |
-| GET | /api/tarot/cards/{id} | Yes | Card detail |
-| GET | /api/readings | Yes | List user's readings (query: `page`, `pageSize`, max 50) |
-| GET | /api/readings/{id} | Yes | Get specific reading |
-| GET | /api/readings/stats | Yes | Reading statistics (top cards, spread usage) |
-| POST | /api/readings | Yes | Create reading |
-| DELETE | /api/readings/{id} | Yes | Delete reading |
-| GET | /api/profile | Yes | Get profile |
-| PUT | /api/profile | Yes | Update profile (displayName) |
+| GET | /api/health | 否 | 健康檢查 |
+| GET | /api/tarot/cards | 是 | 列出全部 78 張牌 |
+| GET | /api/tarot/cards/{id} | 是 | 牌卡細節 |
+| GET | /api/readings | 是 | 列出使用者的占卜紀錄（query：`page`、`pageSize`，上限 50） |
+| GET | /api/readings/{id} | 是 | 取得指定占卜紀錄 |
+| GET | /api/readings/stats | 是 | 占卜統計（常出現的牌、牌陣使用次數） |
+| POST | /api/readings | 是 | 建立占卜紀錄 |
+| DELETE | /api/readings/{id} | 是 | 刪除占卜紀錄 |
+| GET | /api/profile | 是 | 取得個人資料 |
+| PUT | /api/profile | 是 | 更新個人資料（displayName） |
 
-Swagger UI available at `/swagger` in Development environment only.
+Swagger UI 僅在 Development 環境的 `/swagger` 提供。
 
-## Auth
-- Supabase Auth on the frontend issues JWTs (ES256)
-- Backend validates via JWKS: `{PUBLIC_SUPABASE_URL}/auth/v1/.well-known/openid-configuration`
-- `SUPABASE_JWT_SECRET` is loaded but JWKS is the actual signing key source
-- Global `[Authorize]` filter on all controllers; `[AllowAnonymous]` on health only
+## 認證
+- 前端的 Supabase Auth 簽發 JWT（ES256）
+- 後端透過 JWKS 驗證：`{PUBLIC_SUPABASE_URL}/auth/v1/.well-known/openid-configuration`
+- `SUPABASE_JWT_SECRET` 會被載入，但實際的簽章金鑰來源是 JWKS
+- 所有 controller 套用全域 `[Authorize]` filter；僅健康檢查掛 `[AllowAnonymous]`
 
-### Test account (for AI / smoke tests)
-There's a pre-created Supabase user for hitting auth-required endpoints without registering each time. Email is committed in `.env.example`; password lives in local `.env` only (gitignored). Email is already confirmed, so password grant works directly.
+### 測試帳號（供 AI／smoke test 使用）
+有一個預先建立的 Supabase 使用者，用來打需認證的 endpoint 而不必每次重新註冊。Email 已提交於 `.env.example`；密碼僅存在本地 `.env`（已 gitignore）。Email 已驗證，可直接用 password grant。
 
-When you (Claude) need a Bearer token to call `/api/readings`, `/api/profile`, etc., source `.env` and exchange the test credentials for an `access_token`:
+當 Claude 需要 Bearer token 來呼叫 `/api/readings`、`/api/profile` 等時，載入 `.env` 並用測試帳密換 `access_token`：
 
 ```bash
 set -a && source .env && set +a
@@ -140,80 +140,90 @@ TOKEN=$(curl -s -X POST "$PUBLIC_SUPABASE_URL/auth/v1/token?grant_type=password"
 curl -H "Authorization: Bearer $TOKEN" http://localhost:5098/api/profile
 ```
 
-If `TEST_USER_PASSWORD` is missing locally, ask the user — don't try to register a new account or reset the password.
+若本地缺少 `TEST_USER_PASSWORD`，請詢問使用者——不要嘗試註冊新帳號或重設密碼。
 
-## Key Source Files
+## 關鍵原始碼檔案
 
-### Backend
-- `backend/TarotApi/Program.cs` — DI wiring, CORS, JWT config, middleware pipeline
-- `backend/TarotApi/Controllers/` — HealthController, TarotController, ReadingController, ProfileController
-- `backend/TarotApi/Services/TarotService.cs` — Card drawing (Fisher-Yates shuffle, cryptographic RNG), spread configs, feeling card logic
-- `backend/TarotApi/Services/ReadingService.cs` — CRUD for readings, stats aggregation (raw SQL for JSONB)
-- `backend/TarotApi/Services/ProfileService.cs` — Profile CRUD
-- `backend/TarotApi/Data/TarotDbContext.cs` — EF Core context (profiles, readings tables)
-- `backend/TarotApi/Data/TarotCards.cs` — 78-card static data (Chinese names, meanings, keywords)
-- `backend/TarotApi/Models/` — Profile, Reading entities; SpreadType enum; 8 DTOs
-- `backend/TarotApi/Middleware/ExceptionHandlingMiddleware.cs` — Global error handling
-- `backend/TarotApi/Extensions/ClaimsPrincipalExtensions.cs` — GetUserId() from JWT sub claim
+### 後端
+- `backend/TarotApi/Program.cs` — DI 接線、CORS、JWT 設定、middleware pipeline
+- `backend/TarotApi/Controllers/` — HealthController、TarotController、ReadingController、ProfileController
+- `backend/TarotApi/Services/TarotService.cs` — 抽牌（Fisher-Yates 洗牌、加密級 RNG）、牌陣設定、靈感牌邏輯
+- `backend/TarotApi/Services/ReadingService.cs` — 占卜紀錄 CRUD、統計彙整（JSONB 用 raw SQL）
+- `backend/TarotApi/Services/ProfileService.cs` — 個人資料 CRUD
+- `backend/TarotApi/Data/TarotDbContext.cs` — EF Core context（profiles、readings 表）
+- `backend/TarotApi/Data/TarotCards.cs` — 78 張牌靜態資料（中文牌名、牌義、關鍵字）
+- `backend/TarotApi/Models/` — Profile、Reading entity；SpreadType enum；8 個 DTO
+- `backend/TarotApi/Middleware/ExceptionHandlingMiddleware.cs` — 全域錯誤處理
+- `backend/TarotApi/Extensions/ClaimsPrincipalExtensions.cs` — 從 JWT 的 sub claim 取得 GetUserId()
 
-### Frontend
-- `frontend/src/hooks.server.ts` — Auth middleware, session validation, route guards
-- `frontend/src/lib/supabase.ts` — Supabase browser client (@supabase/ssr)
-- `frontend/src/lib/server/api.ts` — Server-side API client (createServerApiClient with Bearer token)
-- `frontend/src/lib/types/index.ts` — All TypeScript types (TarotCard, SpreadType, DTOs, API response types)
-- `frontend/src/lib/utils/reading.ts` — mapApiResponse, getSpreadName, formatDate helpers
-- `frontend/src/lib/tarot/cards.ts` — Combined 78-card data (allCards, cardById, getCardById)
-- `frontend/src/lib/tarot/major-arcana.ts` — 22 major arcana definitions
-- `frontend/src/lib/tarot/minor-arcana.ts` — 56 minor arcana definitions
-- `frontend/src/lib/tarot/spread.ts` — 5 spread configs (single, three-card-time, three-card-problem, three-card-linear, celtic-cross)
-- `frontend/src/lib/tarot/card-images.ts` — Wikimedia Commons image URLs for all 78 cards
-- `frontend/src/lib/tarot/readings.ts` — saveReading() to Supabase
-- `frontend/src/lib/components/Navbar.svelte` — Top navigation with auth-aware display
-- `frontend/src/lib/components/SpreadSelector.svelte` — Spread type radio selector (5 options)
-- `frontend/src/lib/components/QuestionInput.svelte` — Optional question textarea
-- `frontend/src/lib/components/DrawButton.svelte` — Draw button with loading state
-- `frontend/src/lib/components/CardResult.svelte` — Individual card display with image, meaning, orientation
-- `frontend/src/lib/components/ReadingDisplay.svelte` — Full reading results with feeling card section
+### 前端
+- `frontend/src/hooks.server.ts` — 認證 middleware、session 驗證、路由守衛
+- `frontend/src/lib/supabase.ts` — Supabase 瀏覽器端 client（@supabase/ssr）
+- `frontend/src/lib/server/api.ts` — 伺服器端 API client（createServerApiClient，帶 Bearer token）
+- `frontend/src/lib/types/index.ts` — 全部 TypeScript 型別（TarotCard、SpreadType、DTO、API 回應型別）
+- `frontend/src/lib/utils/reading.ts` — mapApiResponse、getSpreadName、formatDate 等 helper
+- `frontend/src/lib/tarot/cards.ts` — 整合的 78 張牌資料（allCards、cardById、getCardById）
+- `frontend/src/lib/tarot/major-arcana.ts` — 22 張大牌定義
+- `frontend/src/lib/tarot/minor-arcana.ts` — 56 張小牌定義
+- `frontend/src/lib/tarot/spread.ts` — 5 種牌陣設定（single、three-card-time、three-card-problem、three-card-linear、celtic-cross）
+- `frontend/src/lib/tarot/card-images.ts` — 全部 78 張牌的 Wikimedia Commons 圖片 URL
+- `frontend/src/lib/tarot/readings.ts` — saveReading()，存入 Supabase
+- `frontend/src/lib/components/Navbar.svelte` — 頂部導覽列，依認證狀態顯示
+- `frontend/src/lib/components/SpreadSelector.svelte` — 牌陣類型 radio 選擇器（5 個選項）
+- `frontend/src/lib/components/QuestionInput.svelte` — 選填的問題 textarea
+- `frontend/src/lib/components/DrawButton.svelte` — 抽牌按鈕，含 loading 狀態
+- `frontend/src/lib/components/CardResult.svelte` — 單張牌顯示，含圖片、牌義、正逆位
+- `frontend/src/lib/components/ReadingDisplay.svelte` — 完整占卜結果，含靈感牌區塊
 
-## Spread Types
-| Key | Cards | Description |
+## 牌陣類型
+| Key | 張數 | 說明 |
 |-----|-------|-------------|
-| `single` | 1 | Daily guidance |
-| `three-card-time` | 3 (+feeling) | Past / Present / Future |
-| `three-card-problem` | 3 (+feeling) | Problem / Cause / Solution |
-| `three-card-linear` | 3 (+feeling) | First / Second / Third |
-| `celtic-cross` | 10 (+feeling) | Classic 10-card layout |
+| `single` | 1 | 每日指引 |
+| `three-card-time` | 3（+靈感牌） | 過去／現在／未來 |
+| `three-card-problem` | 3（+靈感牌） | 問題／原因／解法 |
+| `three-card-linear` | 3（+靈感牌） | 第一／第二／第三 |
+| `celtic-cross` | 10（+靈感牌） | 經典 10 張牌陣 |
 
-Non-single spreads include an extra "feeling card" for additional context.
+非單張牌陣會額外多抽一張「靈感牌」，補充整體脈絡。
 
-## Custom Commands
+## 自訂指令
 
-| Command | Description |
+| 指令 | 說明 |
 |---------|-------------|
 | `/pm` | 產品經理審查 — 檢查未提交變更的完整性（前後端型別一致性、API 合約、UI 狀態、認證、DB 遷移、牌陣邏輯、部署影響、文件更新） |
 | `/pm <說明>` | 帶上下文的聚焦審查（如 `/pm 新增了 weekly-fortune 牌陣`） |
 
-## Common Debug Tips
+## 實作順序
 
-### Backend won't start
-Check all required env vars are set: `PUBLIC_SUPABASE_URL`, `SUPABASE_JWT_SECRET`, `SUPABASE_DB_CONNECTION_STRING`
+收到已分析完成的需求（例如 `/feature` 規格），且沒有其他順序指示時，依下列順序實作：
 
-### 401 Unauthorized from API
-- Ensure frontend is sending `Authorization: Bearer <token>` header
-- Token must be from Supabase Auth (ES256, audience: `authenticated`)
-- Verify `PUBLIC_SUPABASE_URL` matches the Supabase project issuing tokens
+1. 資料庫遷移 — 寫好 migration 檔，並實際套用到資料庫
+2. 後端 — model、service、controller、驗證
+3. 前端 — 型別、元件、頁面
 
-### CORS errors
-- Add the frontend origin to `ALLOWED_ORIGINS` env var on the backend
-- Format: `https://rtarot.zeabur.app` (no trailing slash)
+理由：schema 是基礎；後端依賴 schema；前端依賴後端 API。migration 檔只有在實際對資料庫執行後才會生效——只部署了會寫入新欄位／新值的後端程式碼、卻沒套用對應 migration，會在 runtime 觸發約束違規（見 custom-spread 的 500 事件）。
 
-### Frontend build fails on Zeabur
-- `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_ANON_KEY` must be set as build-time env vars (ARGs) in Zeabur
+## 常見除錯提示
 
-### Database migrations
-- Migrations live in `database/` and target the Supabase PostgreSQL instance
-- EF Core uses `SUPABASE_DB_CONNECTION_STRING` at runtime
+### 後端啟動失敗
+確認所有必要環境變數都已設定：`PUBLIC_SUPABASE_URL`、`SUPABASE_JWT_SECRET`、`SUPABASE_DB_CONNECTION_STRING`
 
-### Docker hot reload not working
-- Frontend: Vite polling enabled in `vite.config.ts` (required for Docker volumes)
-- Backend: `DOTNET_USE_POLLING_FILE_WATCHER=true` set in docker-compose.yml
+### API 回傳 401 Unauthorized
+- 確認前端有送 `Authorization: Bearer <token>` header
+- token 必須來自 Supabase Auth（ES256，audience：`authenticated`）
+- 確認 `PUBLIC_SUPABASE_URL` 與簽發 token 的 Supabase 專案一致
+
+### CORS 錯誤
+- 把前端 origin 加進後端的 `ALLOWED_ORIGINS` 環境變數
+- 格式：`https://rtarot.zeabur.app`（結尾不加斜線）
+
+### 前端在 Zeabur 建置失敗
+- `PUBLIC_SUPABASE_URL` 與 `PUBLIC_SUPABASE_ANON_KEY` 必須在 Zeabur 設為 build-time 環境變數（ARG）
+
+### 資料庫遷移
+- migration 位於 `database/`，目標是 Supabase PostgreSQL 實例
+- EF Core 在 runtime 使用 `SUPABASE_DB_CONNECTION_STRING`
+
+### Docker hot reload 失效
+- 前端：`vite.config.ts` 已啟用 Vite polling（Docker volume 需要）
+- 後端：docker-compose.yml 已設定 `DOTNET_USE_POLLING_FILE_WATCHER=true`
