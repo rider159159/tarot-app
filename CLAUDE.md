@@ -188,10 +188,16 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:5098/api/profile
 
 ## 自訂指令
 
-| 指令 | 說明 |
-|---------|-------------|
-| `/pm` | 產品經理審查 — 檢查未提交變更的完整性（前後端型別一致性、API 合約、UI 狀態、認證、DB 遷移、牌陣邏輯、部署影響、文件更新） |
-| `/pm <說明>` | 帶上下文的聚焦審查（如 `/pm 新增了 weekly-fortune 牌陣`） |
+四個「員工」角色，組成 需求分析 → 實作 → 審查 的接力流程；`/mentor` 為獨立的學習輔助。
+
+| 指令 | 角色 | 說明 |
+|---------|------|-------------|
+| `/feature` | 需求分析師 | 判斷 track（A 新功能／B 修改／C 除錯），把需求整理成可執行 brief，存到 `docs/features/`、`docs/changes/`、`docs/bugs/` |
+| `/build` | 開發工程師 | 依 brief 動 code，遵守動工順序（migration→後端→前端）與五條開發紀律 |
+| `/qa` | 品質保證 | 啟動乾淨 context 的 `qa-reviewer` sub-agent，依八大清單審查未提交變更（前後端型別一致性、API 合約、UI 狀態、認證、DB 遷移、牌陣邏輯、部署影響、文件更新） |
+| `/mentor` | 技術導師 | 解釋程式碼、原理、設計取捨，幫你建立可遷移的心智模型 |
+
+各指令均可帶說明做聚焦（如 `/qa 新增了 weekly-fortune 牌陣`、`/feature 想加每日提醒`）。`qa-reviewer` sub-agent 定義於 `.claude/agents/qa-reviewer.md`。
 
 ## 實作順序
 
