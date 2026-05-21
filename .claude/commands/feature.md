@@ -15,6 +15,25 @@ $ARGUMENTS
 
 不確定的事先 grep 程式碼確認，不要憑記憶推測。
 
+## brief 範本（單一真相來源）
+
+三 track 的輸出格式各住一個檔案，**不要把結構內嵌在這份 skill 裡** — 範本檔才是 single source of truth：
+
+| Track | 範本檔 | 輸出位置 |
+|-------|--------|----------|
+| A 新功能 | `docs/templates/task.md` | `docs/features/<slug>.md` |
+| B 修改 | `docs/templates/change-request.md` | `docs/changes/<slug>.md` |
+| C 除錯 | `docs/templates/bug-report.md` | `docs/bugs/<slug>.md` |
+
+產出 brief 時的標準動作：
+
+1. 讀對應的 `docs/templates/<檔>.md` 取得結構
+2. 套用收集到的內容、刪掉範本最上方的 HTML 註解區塊
+3. **寫檔前先把預定路徑與大綱告訴使用者，等他點頭再寫**
+4. 寫到對應 `docs/<dir>/<slug>.md`；目錄不存在就建立
+
+範本若需要新增欄位或調整結構，直接改範本檔，不要在這份 skill 裡分叉。
+
 ## 步驟 0：判斷 track（必做，先分流）
 
 先判斷需求屬於哪一類，再走對應子流程：
@@ -39,34 +58,9 @@ $ARGUMENTS
 
 如果使用者一開始就把這三件事說清楚了，可以直接跳到 A2，並在輸出開頭標明「需求已釐清」。
 
-### A2：產出規格
+### A2：套範本產出
 
-```
-## 功能名稱：<簡稱>
-
-### User Story
-作為 <角色>，我希望 <能力>，以便 <價值>。
-
-### Acceptance Criteria
-- [ ] 條件 1
-- [ ] 條件 2
-- [ ] 條件 3
-
-### 技術影響
-- 前端：<新頁面 / 改哪個 route / 新 component>
-- 後端：<新 endpoint / 改哪個 Service / 哪張表>
-- DB：<需要的 migration>
-- 第三方：<是否需要新外部服務（Supabase、Zeabur、其他）>
-
-### 優先級評估
-- 使用者價值：高 / 中 / 低（附理由）
-- 開發成本：S / M / L（附理由）
-- 學習收益：<這個功能能讓你學到什麼新技術>
-- 建議順位：<相對於目前 backlog 的位置>
-
-### 待釐清
-- <列出仍不確定的點，附「需要誰回答」>
-```
+依「brief 範本」一節的標準動作：讀 `docs/templates/task.md` → 填入 → 寫到 `docs/features/<slug>.md`。
 
 ## Track B — 修改需求
 
@@ -74,30 +68,9 @@ $ARGUMENTS
 
 先 grep / 讀目前的程式碼，確認「X」現在實際怎麼運作 — 不要憑 `CLAUDE.md` 或記憶推測。
 
-### B2：產出修改 brief
+### B2：套範本產出
 
-```
-## 修改項目：<簡稱>
-
-### 現況
-<目前的行為，附檔案路徑與行號>
-
-### 目標
-<改完後應有的行為>
-
-### 後向相容評估
-- 既有資料：<既有 readings / profiles 會不會壞>
-- 破壞性變更：<逐項列出，或「無」>
-- 需前後端同時部署？<是 / 否，附理由>
-
-### 技術影響
-- 前端：<改哪個 route / component / 型別>
-- 後端：<改哪個 Service / Controller / DTO>
-- DB：<需要的 migration，或「無」>
-
-### 待釐清
-- <仍不確定的點>
-```
+依「brief 範本」一節的標準動作：讀 `docs/templates/change-request.md` → 填入 → 寫到 `docs/changes/<slug>.md`。
 
 ## Track C — 除錯
 
@@ -109,39 +82,13 @@ $ARGUMENTS
 
 用檔案掃描定位**根本原因**，不是症狀 — 在錯的層修只是讓 bug 換個地方爆。檢查同一個 root cause 是否在別處也會觸發。
 
-### C3：產出 bug brief
+### C3：套範本產出
 
-```
-## Bug：<簡稱>
-
-### 重現步驟
-1. ...
-
-### 預期 vs 實際
-- 預期：...
-- 實際：...
-
-### Root cause
-<根本原因，附檔案路徑與行號>
-
-### 影響範圍
-- <同類 pattern 會受影響的位置；標 ⚠ 表示要一併修>
-
-### 修復方向
-<建議怎麼修；但不要動 code>
-```
-
-## 步驟 N：保存
-
-- Track A → `docs/features/<kebab-case-slug>.md`
-- Track B → `docs/changes/<kebab-case-slug>.md`
-- Track C → `docs/bugs/<kebab-case-slug>.md`
-- 寫檔前先告訴使用者要寫的路徑與大綱，等他點頭再寫
-- 對應目錄不存在就建立
+依「brief 範本」一節的標準動作：讀 `docs/templates/bug-report.md` → 填入 → 寫到 `docs/bugs/<slug>.md`。
 
 ## 接力
 
-brief 完成後 → 建議使用者用 `/build` 進入實作，並告訴他這是哪條 track（`/build` 會啟動對應的 regression 紀律）。
+brief 完成後 → 建議使用者用 `/build` 進入實作，並告訴他這是哪條 track（`/build` 會啟動對應的 regression 紀律）、brief 的檔案路徑。
 
 ## 邊界
 
@@ -149,6 +96,7 @@ brief 完成後 → 建議使用者用 `/build` 進入實作，並告訴他這�
 - **不要混 mentor 模式。** 使用者問技術原理（「為什麼用 JWKS」「Svelte store 怎麼運作」），請說：「這是技術問題，建議用 /mentor 開新討論。」
 - **不要硬塞需求。** 素材不足就直接列出仍缺什麼，不要拼湊
 - **不要做提交審查。** 那是 /qa 的工作
+- **不要把範本結構抄進 brief 以外的地方。** 範本檔是單一真相來源，要改格式 → 改範本檔
 
 ## 個性
 
