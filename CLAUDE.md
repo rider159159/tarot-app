@@ -83,6 +83,7 @@ PUBLIC_SUPABASE_URL=          # 同時用於 JWKS endpoint
 SUPABASE_JWT_SECRET=          # 啟動時必須提供
 SUPABASE_DB_CONNECTION_STRING= # PostgreSQL 連線字串
 ALLOWED_ORIGINS=              # 以逗號分隔（例如 https://rtarot.zeabur.app）
+ADMIN_USER_IDS=               # 以逗號分隔、允許呼叫 /api/admin/* 的 Supabase 使用者 ID（空 = 無管理員）
 ```
 
 `.env` 位於 repo 根目錄；`frontend/.env` 是指向 `../.env` 的符號連結。
@@ -116,8 +117,12 @@ ALLOWED_ORIGINS=              # 以逗號分隔（例如 https://rtarot.zeabur.a
 | DELETE | /api/readings/{id} | 是 | 刪除占卜紀錄 |
 | GET | /api/profile | 是 | 取得個人資料 |
 | PUT | /api/profile | 是 | 更新個人資料（displayName） |
+| GET | /api/admin/users | Admin | 列出所有使用者（query：`search`、`page`、`pageSize` 上限 100）—顯示名稱、email、email 驗證狀態 |
+| DELETE | /api/admin/users/{id} | Admin | 刪除使用者帳號並連帶清除（profile、占卜紀錄）；擋掉刪除自己 |
 
 Swagger UI 僅在 Development 環境的 `/swagger` 提供。
+
+Admin endpoint（`/api/admin/*`）要求呼叫者的使用者 ID 在 `ADMIN_USER_IDS` 環境變數內（由 `AdminOnly` policy 把關）。
 
 ## 認證
 - 前端的 Supabase Auth 簽發 JWT（ES256）

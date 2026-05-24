@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -24,6 +25,14 @@ var allowedOrigins = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS")
     ?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
     ?? ["http://localhost:5173"];
 
+// Supabase user IDs (JWT sub claim) allowed to call /api/admin/* endpoints.
+// Empty means no admins — admin endpoints reject every request (fail closed).
+var adminUserIds = (Environment.GetEnvironmentVariable("ADMIN_USER_IDS") ?? "")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+if (adminUserIds.Count == 0)
+    Console.WriteLine("[WARN] ADMIN_USER_IDS is not set — /api/admin endpoints will reject all requests");
+
 // ── Services ──────────────────────────────────────────
 
 // Controllers with global [Authorize]
@@ -42,6 +51,7 @@ builder.Services.AddControllers(options =>
 builder.Services.AddSingleton<TarotService>();
 builder.Services.AddScoped<ReadingService>();
 builder.Services.AddScoped<ProfileService>();
+builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<PromptBuilder>();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -92,7 +102,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
         };
     });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireAssertion(ctx =>
+        {
+            var sub = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return sub is not null && adminUserIds.Contains(sub);
+        }));
+});
 
 // EF Core + PostgreSQL
 builder.Services.AddDbContext<TarotDbContext>(options =>
