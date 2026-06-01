@@ -58,8 +58,11 @@ public class ReadingService(TarotDbContext db, TarotService tarotService)
     // Idempotent on client_token: re-importing returns the existing reading.
     public async Task<ReadingResponseDto> ImportReading(Guid userId, ReadingImportDto dto)
     {
-        // Idempotency check
+        // Idempotency check. IgnoreQueryFilters so a soft-deleted reading with the
+        // same client_token is still matched — the unique index isn't filtered by
+        // deleted_at, so a blind insert would otherwise hit a constraint violation.
         var existing = await db.Readings
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(r => r.ClientToken == dto.ClientToken);
         if (existing is not null)
         {
@@ -129,6 +132,7 @@ public class ReadingService(TarotDbContext db, TarotService tarotService)
         {
             // Race: another concurrent request claimed the same client_token
             var winner = await db.Readings
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(r => r.ClientToken == dto.ClientToken && r.UserId == userId);
             if (winner is not null)
                 return ToResponseDto(winner, ResolveCards(winner));
@@ -187,7 +191,9 @@ public class ReadingService(TarotDbContext db, TarotService tarotService)
 
         if (reading is null) return false;
 
-        db.Readings.Remove(reading);
+        // Soft delete: keep the row, stamp the deletion time. The global query
+        // filter hides it from every subsequent query.
+        reading.DeletedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
         return true;
     }
@@ -213,7 +219,7 @@ public class ReadingService(TarotDbContext db, TarotService tarotService)
                 """
                 SELECT card->>'card_id' AS CardId, COUNT(*) AS Count
                 FROM readings, jsonb_array_elements(cards) AS card
-                WHERE user_id = {0}
+                WHERE user_id = {0} AND deleted_at IS NULL
                 GROUP BY card->>'card_id'
                 ORDER BY Count DESC
                 LIMIT 5

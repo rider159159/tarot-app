@@ -35,12 +35,17 @@ public class TarotDbContext : DbContext
             entity.Property(e => e.Notes).HasColumnName("notes");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at");
             entity.Property(e => e.ClientToken).HasColumnName("client_token");
+            entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
 
             // Mirrors the partial unique index created in migration 003.
             entity.HasIndex(e => e.ClientToken)
                   .IsUnique()
                   .HasFilter("client_token IS NOT NULL")
                   .HasDatabaseName("readings_client_token_unique");
+
+            // Soft delete: every LINQ query against Readings automatically
+            // excludes deleted rows. Raw SQL (e.g. stats) must filter manually.
+            entity.HasQueryFilter(e => e.DeletedAt == null);
         });
     }
 }
