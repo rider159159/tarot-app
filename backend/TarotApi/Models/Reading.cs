@@ -17,4 +17,8 @@ public class Reading
     // populated when an anonymous draw is later imported. Partial unique index
     // makes the import endpoint idempotent.
     public Guid? ClientToken { get; set; }
+
+    // Soft delete timestamp. NULL = active; non-NULL = deleted (UTC time of deletion).
+    // A global query filter excludes deleted rows from all LINQ queries.
+    public DateTime? DeletedAt { get; set; }
 }
