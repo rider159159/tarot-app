@@ -18,8 +18,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 		cookies: {
 			getAll: () => event.cookies.getAll(),
 			setAll: (cookiesToSet) => {
+				// @supabase/ssr defaults auth cookies to Secure, which browsers drop
+				// over plain HTTP. While we serve the app over http:// (IP, no domain
+				// yet), force secure=false so the session cookie actually sticks.
+				// Once a domain + HTTPS is in place, event.url.protocol becomes
+				// 'https:' and the cookie is Secure again automatically.
+				const secure = event.url.protocol === 'https:';
 				cookiesToSet.forEach(({ name, value, options }) =>
-					event.cookies.set(name, value, { path: '/', ...options })
+					event.cookies.set(name, value, { path: '/', ...options, secure })
 				);
 			}
 		}
