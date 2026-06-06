@@ -1,0 +1,17 @@
+# Reverse proxy for the production stack.
+# IP-only for now → listen on :80 (no TLS).
+# When a domain is added later: replace ":80" with the domain name and Caddy
+# will auto-provision HTTPS via Let's Encrypt (ports 80 + 443 are already published).
+
+:80 {
+	# API → ASP.NET Core backend.
+	# Caddy sets X-Forwarded-For automatically, which the backend's rate limiter reads.
+	handle /api/* {
+		reverse_proxy backend:5098
+	}
+
+	# Everything else → SvelteKit SSR (Node adapter).
+	handle {
+		reverse_proxy frontend:3000
+	}
+}
