@@ -1,10 +1,10 @@
 # Tarot App
 
-塔羅占卜應用，monorepo 架構：SvelteKit 前端 + ASP.NET Core 8 後端 + Supabase（Auth/Postgres），部署於 Zeabur。
+塔羅占卜應用，monorepo 架構：SvelteKit 前端 + ASP.NET Core 8 後端 + Supabase（Auth/Postgres），自架於 OCI ARM（Docker + Caddy，Cloudflare proxy）。
 
 線上版：
-- 前端：https://rtarot.zeabur.app
-- 後端：https://rtarot-api.zeabur.app
+- 站台：https://tarot.rydercloud.cc
+- API：https://tarot.rydercloud.cc/api（與前端同域，經 Caddy 反代至後端）
 
 更詳細的架構、API、部署說明見 [CLAUDE.md](./CLAUDE.md)。
 

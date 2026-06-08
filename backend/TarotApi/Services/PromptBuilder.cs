@@ -7,7 +7,7 @@ namespace TarotApi.Services;
 public class PromptBuilder
 {
     private const string FormatVersion = "1.0";
-    private const string Source = "rtarot.zeabur.app";
+    private const string Source = "tarot.rydercloud.cc";
     private const string AiPromptSuggestion =
         "你是一位資深塔羅諮商者。請以這次抽牌結果為基礎，針對使用者的問題提供深入解讀，" +
         "包含每張牌在其位置的意義、牌與牌之間的關聯，以及給予的建議。" +
