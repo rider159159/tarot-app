@@ -1,7 +1,7 @@
 /** 全站 SEO 設定 */
 export const SITE = {
 	/** 正式站網址（無結尾斜線） */
-	url: 'https://rtarot.zeabur.app',
+	url: 'https://tarot.rydercloud.cc',
 	/** 站名，用於 title 後綴與 og:site_name */
 	name: '塔羅占卜',
 	/** 預設標題（首頁與無指定 title 時使用） */
