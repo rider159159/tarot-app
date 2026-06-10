@@ -22,7 +22,7 @@ services:
       # behind a reverse proxy SvelteKit sees an internal host and rejects
       # form actions with 403 "Cross-site POST form submissions are forbidden".
       # Update this (and ALLOWED_ORIGINS in .env) when a domain is added.
-      - ORIGIN=http://134.185.107.141
+      - ORIGIN=https://tarot.rydercloud.cc
     expose:
       - "3000"
     restart: unless-stopped
@@ -46,6 +46,8 @@ services:
       - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/origin.pem:/etc/caddy/origin.pem:ro
+      - ./caddy/origin.key:/etc/caddy/origin.key:ro
       - caddy_data:/data
       - caddy_config:/config
     restart: unless-stopped

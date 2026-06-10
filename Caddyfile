@@ -1,11 +1,13 @@
-# Reverse proxy for the production stack.
-# IP-only for now → listen on :80 (no TLS).
-# When a domain is added later: replace ":80" with the domain name and Caddy
-# will auto-provision HTTPS via Let's Encrypt (ports 80 + 443 are already published).
+# Reverse proxy for the production stack — behind Cloudflare (orange-cloud proxy).
+# TLS terminates here with a Cloudflare Origin Certificate (CF↔origin leg).
+# Public TLS (visitor↔CF) is handled by Cloudflare. SSL mode: Full (strict).
+#
+# Naked-IP access (http://134.185.107.141) is intentionally NOT served:
+# only the domain vhost is defined, so direct-to-origin IP hits get no match.
+tarot.rydercloud.cc {
+	tls /etc/caddy/origin.pem /etc/caddy/origin.key
 
-:80 {
-	# API → ASP.NET Core backend.
-	# Caddy sets X-Forwarded-For automatically, which the backend's rate limiter reads.
+	# API → ASP.NET Core backend. Caddy sets X-Forwarded-For for the rate limiter.
 	handle /api/* {
 		reverse_proxy backend:5098
 	}
