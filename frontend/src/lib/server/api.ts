@@ -1,7 +1,7 @@
 import { env } from '$env/dynamic/private';
 
 // Dev (Docker): http://backend:5098
-// Prod (Zeabur): http://<service-name>.zeabur.internal:8080
+// Prod (OCI self-host): http://backend:5098 (same Docker network, via docker-compose.prod.yml)
 // Set via INTERNAL_API_URL env var (server-only, not PUBLIC_)
 const baseUrl = env.INTERNAL_API_URL || 'http://localhost:5098';
 

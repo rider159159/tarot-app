@@ -128,7 +128,7 @@ builder.Services.AddCors(options =>
 });
 
 // Rate limiter: only applied to endpoints decorated with [EnableRateLimiting].
-// Behind Zeabur's LB, the actual client IP arrives via X-Forwarded-For.
+// Behind the Caddy reverse proxy, the actual client IP arrives via X-Forwarded-For.
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
