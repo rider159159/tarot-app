@@ -13,7 +13,3 @@ vite.config.ts.timestamp-*
 **/obj/
 *.user
 .vs/
-
-# Caddy origin cert / private key — referenced by docker-compose.prod.yml,
-# placed on the prod host only. NEVER commit (Cloudflare Origin CA private key).
-/caddy/
