@@ -1,11 +1,19 @@
 # Production stack for self-hosting on the OCI ARM (aarch64) machine.
 # Dev stack lives in docker-compose.yml — do not mix the two.
 #
+# Reverse proxy lives in a separate repo: github.com/rider159159/oci-infra
+# (Nginx container, owns 80/443, shares the external `web` Docker network).
+# This stack only exposes the apps to the shared network; nginx connects in.
+#
+# Prerequisite (one-time on machine):
+#   docker network create web
+#
 # Bring up:  docker compose -f docker-compose.prod.yml up -d --build
 # Secrets come from .env (never committed). See .env.example for required keys.
 
 services:
   frontend:
+    container_name: frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -18,18 +26,20 @@ services:
       # Server-only, read at RUNTIME ($env/dynamic/private). SvelteKit SSR → backend.
       - INTERNAL_API_URL=http://backend:5098
       # Tells SvelteKit's Node adapter the real public origin so its CSRF
-      # check accepts form POSTs that come through Caddy. Without this,
-      # behind a reverse proxy SvelteKit sees an internal host and rejects
-      # form actions with 403 "Cross-site POST form submissions are forbidden".
-      # Update this (and ALLOWED_ORIGINS in .env) when a domain is added.
+      # check accepts form POSTs that come through the reverse proxy. Without
+      # this, behind a proxy SvelteKit sees an internal host and rejects form
+      # actions with 403 "Cross-site POST form submissions are forbidden".
       - ORIGIN=https://tarot.rydercloud.cc
     expose:
       - "3000"
+    networks:
+      - web
     restart: unless-stopped
     depends_on:
       - backend
 
   backend:
+    container_name: backend
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -37,24 +47,11 @@ services:
       - .env
     expose:
       - "5098"
+    networks:
+      - web
     restart: unless-stopped
 
-  caddy:
-    image: caddy:2-alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./caddy/origin.pem:/etc/caddy/origin.pem:ro
-      - ./caddy/origin.key:/etc/caddy/origin.key:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    restart: unless-stopped
-    depends_on:
-      - frontend
-      - backend
-
-volumes:
-  caddy_data:
-  caddy_config:
+networks:
+  web:
+    external: true
+    name: web
