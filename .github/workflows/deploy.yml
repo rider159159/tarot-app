@@ -1,0 +1,35 @@
+name: Deploy to OCI
+
+# push 到 main 由 GitHub 自動觸發（事件驅動，非輪詢）。
+# workflow_dispatch 讓你能手動按鈕重跑一次。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 此 workflow 只對外 SSH，不需要任何 repo 權限。
+permissions: {}
+
+# 同時間只跑一個部署，避免兩次 push 互相打架。
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        env:
+          SSH_KEY: ${{ secrets.OCI_SSH_KEY }}
+          SSH_HOST: ${{ secrets.OCI_HOST }}
+          SSH_USER: ${{ secrets.OCI_USER }}
+          KNOWN_HOSTS: ${{ secrets.OCI_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # 機器端 authorized_keys 對這把 key 上了 forced command，
+          # 所以這裡不送任何指令，連上即觸發 deploy-tarot.sh。
+          ssh -i ~/.ssh/id_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$SSH_USER@$SSH_HOST"
