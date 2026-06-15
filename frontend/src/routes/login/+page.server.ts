@@ -13,6 +13,10 @@ const LOAD_MESSAGES: Record<string, { kind: 'error' | 'notice'; text: string }> 
 	reset_success: {
 		kind: 'notice',
 		text: '密碼已更新，請使用新密碼重新登入。'
+	},
+	oauth_failed: {
+		kind: 'error',
+		text: 'Google 登入失敗，請再試一次，或改用電子郵件登入。'
 	}
 };
 

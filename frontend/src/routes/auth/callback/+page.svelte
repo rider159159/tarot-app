@@ -8,22 +8,28 @@
 	let { data }: { data: PageData } = $props();
 
 	onMount(async () => {
+		// OAuth failures get a neutral error; email-verification failures keep the
+		// existing "already verified, just log in" notice (see comment below).
+		const failureTarget =
+			data.flow === 'oauth' ? '/login?error=oauth_failed' : '/login?notice=email_verified';
+
 		// No code at all → nothing to exchange. Treat as a failed/old link.
 		if (!data.code) {
-			await goto('/login?notice=email_verified', { replaceState: true });
+			await goto(failureTarget, { replaceState: true });
 			return;
 		}
 
 		const { error } = await supabase.auth.exchangeCodeForSession(data.code);
 
 		if (error) {
-			// The email itself was already verified by Supabase before redirecting
-			// here — only the auto-login (code exchange) failed. This commonly
-			// happens when the link is opened in a different browser/device than
-			// the one used to sign up, since the PKCE code_verifier lives in that
-			// original browser's storage. So we send the user to log in normally,
-			// NOT tell them verification failed.
-			await goto('/login?notice=email_verified', { replaceState: true });
+			// For email verification: the email itself was already verified by
+			// Supabase before redirecting here — only the auto-login (code exchange)
+			// failed. This commonly happens when the link is opened in a different
+			// browser/device than the one used to sign up, since the PKCE
+			// code_verifier lives in that original browser's storage. So we send the
+			// user to log in normally, NOT tell them verification failed.
+			// For OAuth: the exchange failed for real, so we surface an error.
+			await goto(failureTarget, { replaceState: true });
 			return;
 		}
 
