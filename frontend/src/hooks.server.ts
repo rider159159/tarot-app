@@ -16,6 +16,13 @@ const PUBLIC_PATHS = [
 export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 		cookies: {
+			// Keep the ~1KB user object OUT of the auth cookie (it lives in a
+			// separate store instead), so the refreshed Set-Cookie header stays
+			// small. Without this, on token refresh the chunked session cookie
+			// bloats the response headers past the reverse proxy's buffer and
+			// triggers a 502. The browser client (lib/supabase.ts) MUST use the
+			// same 'tokens-only' encoding, or the two disagree on cookie format.
+			encode: 'tokens-only',
 			getAll: () => event.cookies.getAll(),
 			setAll: (cookiesToSet) => {
 				// @supabase/ssr defaults auth cookies to Secure, which browsers drop
