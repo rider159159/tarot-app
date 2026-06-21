@@ -98,6 +98,8 @@ email、設密碼、收驗證信的流程，降低進入門檻。
 
 - **帳號連結**沿用 Supabase 預設，但預設行為依專案設定而定 → 實作前由你在
   Supabase Dashboard 確認該專案目前的 identity linking 設定一次。
-- **zeabur 部署是否仍在線**：CLAUDE.md 仍記載 `rtarot.zeabur.app`。若該站還對外
-  服務、也要支援 Google 登入，需把它的 origin / redirect 一併加入白名單；若已
-  汰換為 OCI VPS，請順手更新 CLAUDE.md 的部署表 → 需要你確認。
+
+> **已定案（2026-06-21）**：Zeabur 已汰換 — 實測舊 API `rtarot-api.zeabur.app`
+> 已無法連線（HTTP 000），OCI 自架 `https://tarot.rydercloud.cc` 為唯一主力。
+> 因此**不需**把 Zeabur 的 origin / redirect 加入 Google / Supabase 白名單；
+> CLAUDE.md 部署表已同步更新為 OCI。
