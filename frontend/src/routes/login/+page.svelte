@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import type { ActionData, PageData } from './$types';
 	import ResendVerification from '$lib/components/ResendVerification.svelte';
+	import GoogleSignInButton from '$lib/components/GoogleSignInButton.svelte';
 	import Seo from '$lib/components/Seo.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -61,6 +62,7 @@
 		{#if form?.needsVerification && form?.email}
 			<ResendVerification email={form.email} />
 		{/if}
+		<GoogleSignInButton {returnTo} />
 		<p class="link"><a href="/forgot-password">忘記密碼？</a></p>
 		<p class="link">還沒有帳號？<a href={`/register?returnTo=${encodeURIComponent(returnTo)}`}>註冊</a></p>
 	</div>

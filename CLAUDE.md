@@ -1,7 +1,7 @@
 # Tarot App — Claude 開發脈絡
 
 ## 總覽
-單一 repo（monorepo），包含 SvelteKit 前端與 .NET 8 後端，部署於 Zeabur。
+單一 repo（monorepo），包含 SvelteKit 前端與 .NET 8 後端，自架部署於 OCI ARM VPS（Docker + Nginx 反代 + Cloudflare）。
 
 ## 架構
 
@@ -32,13 +32,19 @@ tarot-app/
 └── .env                   共用環境變數（frontend/.env 為其符號連結）
 ```
 
-## Zeabur 部署
-| 服務 | 名稱 | 公開 URL | Port |
-|---------|------|-----------|------|
-| 前端 | tarot-app-uram | rtarot.zeabur.app | 8080 |
-| 後端 | tarot-app-ist | rtarot-api.zeabur.app | 8080 |
+## 部署（OCI 自架）
+> 已從 Zeabur 遷出，自架於 OCI ARM VPS。舊站 `rtarot.zeabur.app` / `rtarot-api.zeabur.app` 已汰換、不再對外（實測 HTTP 000）。
 
-健康檢查：`GET https://rtarot-api.zeabur.app/api/health`
+| 服務 | 容器 | 對外 | 內部 port |
+|------|------|------|-----------|
+| 前端 | `frontend` | https://tarot.rydercloud.cc | 3000（expose，不直接對外） |
+| 後端 | `backend` | 經反代掛在 `/api/*` | 5098（expose，不直接對外） |
+
+- 反向代理：Nginx 容器（獨立 repo `oci-infra`，獨佔 80/443，共用外部 `web` Docker 網路）。
+- 前置：Cloudflare proxy + Origin Cert（Full strict），對外一律 HTTPS。
+- Prod 編排：`docker-compose.prod.yml`（`docker compose -f docker-compose.prod.yml up -d --build`）。
+
+健康檢查：`GET https://tarot.rydercloud.cc/api/health`
 
 ## 本地開發
 
@@ -82,7 +88,7 @@ INTERNAL_API_URL=            # 伺服器端呼叫 API 用的後端 URL（預設�
 PUBLIC_SUPABASE_URL=          # 同時用於 JWKS endpoint
 SUPABASE_JWT_SECRET=          # 啟動時必須提供
 SUPABASE_DB_CONNECTION_STRING= # PostgreSQL 連線字串
-ALLOWED_ORIGINS=              # 以逗號分隔（例如 https://rtarot.zeabur.app）
+ALLOWED_ORIGINS=              # 以逗號分隔（例如 https://tarot.rydercloud.cc）
 ADMIN_USER_IDS=               # 以逗號分隔、允許呼叫 /api/admin/* 的 Supabase 使用者 ID（空 = 無管理員）
 ```
 
@@ -226,10 +232,10 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:5098/api/profile
 
 ### CORS 錯誤
 - 把前端 origin 加進後端的 `ALLOWED_ORIGINS` 環境變數
-- 格式：`https://rtarot.zeabur.app`（結尾不加斜線）
+- 格式：`https://tarot.rydercloud.cc`（結尾不加斜線）
 
-### 前端在 Zeabur 建置失敗
-- `PUBLIC_SUPABASE_URL` 與 `PUBLIC_SUPABASE_ANON_KEY` 必須在 Zeabur 設為 build-time 環境變數（ARG）
+### 前端建置失敗（缺 build-time 環境變數）
+- `PUBLIC_SUPABASE_URL` 與 `PUBLIC_SUPABASE_ANON_KEY` 必須在建置時以 build arg 傳入（見 `docker-compose.prod.yml` 的 `frontend.build.args`），由 Vite 內嵌進 bundle
 
 ### 資料庫遷移
 - migration 位於 `database/`，目標是 Supabase PostgreSQL 實例

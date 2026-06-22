@@ -7,7 +7,10 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ url }) => {
 	return {
 		code: url.searchParams.get('code'),
-		next: normalizeNext(url.searchParams.get('next'))
+		next: normalizeNext(url.searchParams.get('next')),
+		// 'oauth' when this callback is the return leg of signInWithGoogle, so the
+		// page can show an OAuth-specific error instead of the email one on failure.
+		flow: url.searchParams.get('flow')
 	};
 };
 

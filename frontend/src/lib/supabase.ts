@@ -44,3 +44,18 @@ export const supabase = createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE
 		}
 	}
 });
+
+// Start the Google OAuth flow. redirectTo points back at our existing PKCE
+// callback (/auth/callback), which exchanges the code for a session. We tag it
+// with flow=oauth so the callback can show an OAuth-specific error message
+// instead of the email-verification one when the exchange fails. next carries
+// the post-login destination, mirroring the email/password returnTo behaviour.
+export function signInWithGoogle(returnTo: string = '/') {
+	const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(
+		returnTo
+	)}&flow=oauth`;
+	return supabase.auth.signInWithOAuth({
+		provider: 'google',
+		options: { redirectTo }
+	});
+}
