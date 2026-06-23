@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import { supabase } from '$lib/supabase';
 	import type { PageData } from './$types';
 	import Seo from '$lib/components/Seo.svelte';
@@ -33,10 +33,13 @@
 			return;
 		}
 
-		// Code exchange succeeded — the user is now logged in. Refresh server
-		// load data so hooks.server.ts sees the new session cookie.
-		await invalidateAll();
-		await goto(data.next, { replaceState: true });
+		// Code exchange succeeded. Use a full-page navigation (not goto) so the
+		// destination renders from a fresh server request that carries the
+		// just-written session cookie. @supabase/ssr writes that cookie on the
+		// onAuthStateChange tick — slightly AFTER exchangeCodeForSession resolves —
+		// so a client-side goto can re-run the layout load before the cookie is
+		// flushed and land "logged out" until a manual refresh.
+		window.location.assign(data.next);
 	});
 </script>
 
