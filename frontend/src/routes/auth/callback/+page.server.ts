@@ -1,20 +1,23 @@
 import type { PageServerLoad } from './$types';
+import { redirect } from '@sveltejs/kit';
 
-// The actual code exchange happens in the browser (+page.svelte) because the
-// PKCE code_verifier is stored in browser storage by createBrowserClient at
-// signUp() time. A server-side exchange can't read it, so we only pass through
-// the query params here.
-export const load: PageServerLoad = async ({ url }) => {
-	return {
-		code: url.searchParams.get('code'),
-		next: normalizeNext(url.searchParams.get('next')),
-		// 'oauth' when this callback is the return leg of signInWithGoogle, so the
-		// page can show an OAuth-specific error instead of the email one on failure.
-		flow: url.searchParams.get('flow')
-	};
+export const load: PageServerLoad = async ({ url, locals: { supabase } }) => {
+	const code = url.searchParams.get('code');
+	const next = normalizeNext(url.searchParams.get('next'));
+	const flow = url.searchParams.get('flow');
+
+	if (code) {
+		const { error } = await supabase.auth.exchangeCodeForSession(code);
+		if (!error) {
+			throw redirect(303, next);
+		}
+	}
+
+	const failureTarget =
+		flow === 'oauth' ? '/login?error=oauth_failed' : '/login?notice=email_verified';
+	throw redirect(303, failureTarget);
 };
 
-// Only allow same-origin paths to avoid open-redirect.
 function normalizeNext(raw: string | null): string {
 	if (!raw) return '/';
 	if (!raw.startsWith('/')) return '/';
