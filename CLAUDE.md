@@ -13,7 +13,8 @@ tarot-app/
 │   │   ├── routes/               頁面（見下方「前端路由」）
 │   │   └── lib/
 │   │       ├── supabase.ts       Supabase 瀏覽器端 client
-│   │       ├── server/api.ts     伺服器端 API client
+│   │       ├── server/api.ts     伺服器端 API client（轉送 X-Request-ID）
+│   │       ├── server/request-id.ts  Request ID 驗證／產生
 │   │       ├── components/       UI 元件（6 個檔案）
 │   │       ├── tarot/            牌卡資料、牌陣、圖片
 │   │       ├── types/            TypeScript 型別定義
@@ -26,7 +27,8 @@ tarot-app/
 │       ├── Services/             TarotService、ReadingService、ProfileService
 │       ├── Models/               entity、DTO、enum
 │       ├── Data/                 EF Core context、78 張牌種子資料
-│       └── Middleware/           ExceptionHandlingMiddleware
+│       ├── HealthChecks/         Supabase Postgres readiness check
+│       └── Middleware/           Exception handling、request observability
 ├── database/              Supabase migration
 ├── docker-compose.yml     僅供本地開發
 └── .env                   共用環境變數（frontend/.env 為其符號連結）
@@ -45,6 +47,23 @@ tarot-app/
 - Prod 編排：`docker-compose.prod.yml`（`docker compose -f docker-compose.prod.yml up -d --build`）。
 
 健康檢查：`GET https://tarot.rydercloud.cc/api/health`
+
+### Observability foundation（NOT_DEPLOYED）
+
+目前 branch 內的 `docker-compose.prod.yml` 已加入 frontend/backend healthcheck、
+frontend 等待 backend healthy，以及 Docker `json-file` 10 MiB × 3 輪替；這些異動
+尚未在 OCI 上部署或驗證，不代表 live 狀態已改變。
+
+- Public：frontend `GET /health`（只回 status/timestamp，response header 含
+  `X-Request-ID`）；既有 backend `GET /api/health` 保持相容。
+- Internal：backend `GET /_internal/health/live`、
+  `GET /_internal/health/ready`、`GET /metrics`。現有 Nginx 不會將這些路徑
+  代理到 backend（catch-all 會送到 frontend）；backend endpoints 只應經
+  Docker private network 存取。
+- Backend console log 使用單行 JSON／UTC／scope；request log 只記 method、
+  route template、status、duration、request ID，不記 query/body/token/cookie/PII/IP。
+- 這批異動不需要 database migration。與 `oci-infra` 的 Loki／Prometheus／Grafana
+  串接及 OCI live checks 仍待 SSH 確認。
 
 ## 本地開發
 
@@ -105,15 +124,22 @@ ADMIN_USER_IDS=               # 以逗號分隔、允許呼叫 /api/admin/* 的 
 | `/profile` | 個人資料 | 使用者資訊、占卜統計、修改名稱 |
 | `/auth/callback` | — | OAuth callback（用 code 換 session） |
 | `/auth/logout` | — | POST endpoint，登出後導向 /login |
+| `/health` | — | Public process health JSON（無 DB／secret） |
 
 認證路由規則：未登入使用者導向 `/login`；已登入使用者從 `/login`、`/register` 導離。
 
 ## 後端 API endpoint
-除健康檢查外，全部需要 `Authorization: Bearer <supabase-jwt>`。
+除健康檢查與 internal observability endpoints 外，全部需要
+`Authorization: Bearer <supabase-jwt>`。Internal endpoints 雖為 anonymous，
+但現有 Nginx 不會把這些路徑代理到 backend（catch-all 會送到 frontend），
+backend endpoints 只能從 private Docker network 存取。
 
 | Method | 路徑 | 需認證 | 說明 |
 |--------|------|------|-------------|
 | GET | /api/health | 否 | 健康檢查 |
+| GET | /_internal/health/live | 否（internal） | Backend process liveness |
+| GET | /_internal/health/ready | 否（internal） | Supabase Postgres readiness（3 秒 timeout） |
+| GET | /metrics | 否（internal） | Prometheus metrics（低 cardinality labels） |
 | GET | /api/tarot/cards | 是 | 列出全部 78 張牌 |
 | GET | /api/tarot/cards/{id} | 是 | 牌卡細節 |
 | GET | /api/readings | 是 | 列出使用者的占卜紀錄（query：`page`、`pageSize`，上限 50） |
@@ -134,7 +160,9 @@ Admin endpoint（`/api/admin/*`）要求呼叫者的使用者 ID 在 `ADMIN_USER
 - 前端的 Supabase Auth 簽發 JWT（ES256）
 - 後端透過 JWKS 驗證：`{PUBLIC_SUPABASE_URL}/auth/v1/.well-known/openid-configuration`
 - `SUPABASE_JWT_SECRET` 會被載入，但實際的簽章金鑰來源是 JWKS
-- 所有 controller 套用全域 `[Authorize]` filter；僅健康檢查掛 `[AllowAnonymous]`
+- 所有 controller 套用全域 `[Authorize]` filter；既有 `/api/health` controller
+  掛 `[AllowAnonymous]`。`/_internal/*` 與 `/metrics` 是 endpoint routing，僅限
+  private network exposure。
 
 ### 測試帳號（供 AI／smoke test 使用）
 有一個預先建立的 Supabase 使用者，用來打需認證的 endpoint 而不必每次重新註冊。Email 已提交於 `.env.example`；密碼僅存在本地 `.env`（已 gitignore）。Email 已驗證，可直接用 password grant。
@@ -162,15 +190,19 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:5098/api/profile
 - `backend/TarotApi/Services/ReadingService.cs` — 占卜紀錄 CRUD、統計彙整（JSONB 用 raw SQL）
 - `backend/TarotApi/Services/ProfileService.cs` — 個人資料 CRUD
 - `backend/TarotApi/Data/TarotDbContext.cs` — EF Core context（profiles、readings 表）
+- `backend/TarotApi/HealthChecks/DatabaseHealthCheck.cs` — 3 秒 database readiness check，caller cancellation 會繼續向外傳遞
 - `backend/TarotApi/Data/TarotCards.cs` — 78 張牌靜態資料（中文牌名、牌義、關鍵字）
 - `backend/TarotApi/Models/` — Profile、Reading entity；SpreadType enum；8 個 DTO
 - `backend/TarotApi/Middleware/ExceptionHandlingMiddleware.cs` — 全域錯誤處理
+- `backend/TarotApi/Middleware/RequestObservabilityMiddleware.cs` — Request ID、scope 與低敏感度 request completion log
 - `backend/TarotApi/Extensions/ClaimsPrincipalExtensions.cs` — 從 JWT 的 sub claim 取得 GetUserId()
 
 ### 前端
 - `frontend/src/hooks.server.ts` — 認證 middleware、session 驗證、路由守衛
 - `frontend/src/lib/supabase.ts` — Supabase 瀏覽器端 client（@supabase/ssr）
 - `frontend/src/lib/server/api.ts` — 伺服器端 API client（createServerApiClient，帶 Bearer token）
+- `frontend/src/lib/server/request-id.ts` — 驗證／產生安全的 X-Request-ID
+- `frontend/src/routes/health/+server.ts` — Public frontend process health endpoint
 - `frontend/src/lib/types/index.ts` — 全部 TypeScript 型別（TarotCard、SpreadType、DTO、API 回應型別）
 - `frontend/src/lib/utils/reading.ts` — mapApiResponse、getSpreadName、formatDate 等 helper
 - `frontend/src/lib/tarot/cards.ts` — 整合的 78 張牌資料（allCards、cardById、getCardById）

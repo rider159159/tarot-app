@@ -3,8 +3,8 @@ import type { Session } from '@supabase/supabase-js';
 import { createServerApiClient, ApiError } from './api';
 import type { ApiExportPayload, ApiExportBatch } from '$lib/types';
 
-export async function fetchSingleExport(session: Session | null, id: string) {
-	const api = createServerApiClient(session!.access_token);
+export async function fetchSingleExport(session: Session | null, id: string, requestId: string) {
+	const api = createServerApiClient(session!.access_token, requestId);
 	try {
 		const payload = await api.get<ApiExportPayload>(`/api/readings/${id}/export`);
 		return {
@@ -20,8 +20,8 @@ export async function fetchSingleExport(session: Session | null, id: string) {
 	}
 }
 
-export async function fetchBatchExport(session: Session | null) {
-	const api = createServerApiClient(session!.access_token);
+export async function fetchBatchExport(session: Session | null, requestId: string) {
+	const api = createServerApiClient(session!.access_token, requestId);
 	try {
 		const payload = await api.get<ApiExportBatch>('/api/readings/export');
 		return {

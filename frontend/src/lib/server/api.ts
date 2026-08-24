@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/private';
+import { REQUEST_ID_HEADER } from './request-id';
 
 // Dev (Docker): http://backend:5098
 // Prod (OCI self-host): http://backend:5098 (same Docker network, via docker-compose.prod.yml)
@@ -29,10 +30,11 @@ async function parseErrorResponse(res: Response, method: string, path: string): 
 	return new ApiError(res.status, `${method} ${path} failed: ${res.status} ${res.statusText}`);
 }
 
-export function createServerApiClient(accessToken: string) {
+export function createServerApiClient(accessToken: string, requestId: string) {
 	const headers = {
 		'Content-Type': 'application/json',
-		Authorization: `Bearer ${accessToken}`
+		Authorization: `Bearer ${accessToken}`,
+		[REQUEST_ID_HEADER]: requestId
 	};
 
 	return {
