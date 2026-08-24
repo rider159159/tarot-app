@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
-import { redirect, type Handle } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { getOrCreateRequestId, REQUEST_ID_HEADER } from '$lib/server/request-id';
 
 // '/' is now public so anonymous users can draw cards.
 // /history, /profile remain auth-gated by default (not in this list).
@@ -14,6 +15,16 @@ const PUBLIC_PATHS = [
 ];
 
 export const handle: Handle = async ({ event, resolve }) => {
+	const requestId = getOrCreateRequestId(event.request.headers.get(REQUEST_ID_HEADER));
+	event.locals.requestId = requestId;
+
+	// Keep the container health endpoint independent from Supabase availability.
+	if (event.url.pathname === '/health') {
+		const response = await resolve(event);
+		response.headers.set(REQUEST_ID_HEADER, requestId);
+		return response;
+	}
+
 	event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 		cookies: {
 			// Keep the ~1KB user object OUT of the auth cookie (it lives in a
@@ -60,15 +71,21 @@ export const handle: Handle = async ({ event, resolve }) => {
 		path === '/' || PUBLIC_PATHS.some((p) => p !== '/' && path.startsWith(p));
 
 	if (!session && !isPublic) {
-		throw redirect(303, '/login');
+		const response = new Response(null, { status: 303, headers: { location: '/login' } });
+		response.headers.set(REQUEST_ID_HEADER, requestId);
+		return response;
 	}
 	if (session && (path === '/login' || path === '/register')) {
-		throw redirect(303, '/');
+		const response = new Response(null, { status: 303, headers: { location: '/' } });
+		response.headers.set(REQUEST_ID_HEADER, requestId);
+		return response;
 	}
 
-	return resolve(event, {
+	const response = await resolve(event, {
 		filterSerializedResponseHeaders(name) {
 			return name === 'content-range' || name === 'x-supabase-api-version';
 		}
 	});
+	response.headers.set(REQUEST_ID_HEADER, requestId);
+	return response;
 };

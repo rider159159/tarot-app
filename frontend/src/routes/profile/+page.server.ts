@@ -20,7 +20,7 @@ const EMPTY_STATS: ApiReadingStatsResponse = {
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { session } = await locals.safeGetSession();
-	const api = createServerApiClient(session!.access_token);
+	const api = createServerApiClient(session!.access_token, locals.requestId);
 
 	// allSettled (not Promise.all) so a single failing request doesn't take
 	// down the whole page. profile is critical — if it fails we still 500;
@@ -47,7 +47,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 export const actions: Actions = {
 	updateName: async ({ request, locals }) => {
 		const { session } = await locals.safeGetSession();
-		const api = createServerApiClient(session!.access_token);
+		const api = createServerApiClient(session!.access_token, locals.requestId);
 
 		const data = await request.formData();
 		const displayName = data.get('displayName') as string;
@@ -64,7 +64,7 @@ export const actions: Actions = {
 
 	drawWeekly: async ({ locals }) => {
 		const { session } = await locals.safeGetSession();
-		const api = createServerApiClient(session!.access_token);
+		const api = createServerApiClient(session!.access_token, locals.requestId);
 
 		try {
 			const reading = await api.post<ApiReadingResponse>('/api/readings/weekly-fortune', {});
@@ -80,6 +80,6 @@ export const actions: Actions = {
 		const { session } = await locals.safeGetSession();
 		const id = (await request.formData()).get('id')?.toString();
 		if (!id) return fail(400, { exportError: '缺少 reading id' });
-		return fetchSingleExport(session, id);
+		return fetchSingleExport(session, id, locals.requestId);
 	}
 };

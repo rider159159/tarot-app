@@ -15,6 +15,12 @@ RUN dotnet publish TarotApi/TarotApi.csproj -c Release -o /app/publish --no-rest
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 
+# The runtime image has no HTTP probe utility. Keep curl only in the final
+# image so Docker can call the process-only liveness endpoint.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /app/publish .
 
 EXPOSE 5098

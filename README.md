@@ -8,7 +8,8 @@
 - 站台：https://tarot.rydercloud.cc
 - API：https://tarot.rydercloud.cc/api（與前端同域，由 oci-infra 的 Nginx 反代至後端）
 
-更詳細的架構、API、部署說明見 [CLAUDE.md](./CLAUDE.md)。
+更詳細的架構、API、部署說明見 [CLAUDE.md](./CLAUDE.md)。Observability
+基礎與尚未部署的 live checks 見 [docs/observability.md](./docs/observability.md)。
 
 ## 本地啟動
 

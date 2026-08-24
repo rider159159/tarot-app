@@ -4,6 +4,7 @@ import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { createServerApiClient, ApiError } from '$lib/server/api';
 import { fetchSingleExport } from '$lib/server/export';
+import { REQUEST_ID_HEADER } from '$lib/server/request-id';
 import type { ApiAnonymousDrawResponse, ApiReadingResponse } from '$lib/types';
 
 const baseUrl = env.INTERNAL_API_URL || 'http://localhost:5098';
@@ -27,7 +28,7 @@ export const actions: Actions = {
 
 		// Logged in → persist via /api/readings (existing flow)
 		if (session) {
-			const api = createServerApiClient(session.access_token);
+			const api = createServerApiClient(session.access_token, locals.requestId);
 			try {
 				const result = await api.post<ApiReadingResponse>('/api/readings', {
 					spreadType,
@@ -46,7 +47,10 @@ export const actions: Actions = {
 		try {
 			const res = await fetch(`${baseUrl}/api/tarot/draw`, {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+				headers: {
+					'Content-Type': 'application/json',
+					[REQUEST_ID_HEADER]: locals.requestId
+				},
 				body: JSON.stringify({ spreadType, question, cardCount })
 			});
 
@@ -100,7 +104,7 @@ export const actions: Actions = {
 			return fail(400, { importError: '資料格式錯誤' });
 		}
 
-		const api = createServerApiClient(session.access_token);
+		const api = createServerApiClient(session.access_token, locals.requestId);
 		try {
 			const result = await api.post<ApiReadingResponse>('/api/readings/import', pending);
 			return { importSuccess: true, importedReading: result };
@@ -115,6 +119,6 @@ export const actions: Actions = {
 		const { session } = await locals.safeGetSession();
 		const id = (await request.formData()).get('id')?.toString();
 		if (!id) return fail(400, { exportError: '缺少 reading id' });
-		return fetchSingleExport(session, id);
+		return fetchSingleExport(session, id, locals.requestId);
 	}
 };

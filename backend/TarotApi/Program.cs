@@ -1,14 +1,19 @@
 using System.Security.Claims;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Prometheus;
 using TarotApi.Data;
+using TarotApi.HealthChecks;
 using TarotApi.Middleware;
 using TarotApi.Services;
 
@@ -30,8 +35,6 @@ var allowedOrigins = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS")
 var adminUserIds = (Environment.GetEnvironmentVariable("ADMIN_USER_IDS") ?? "")
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
     .ToHashSet(StringComparer.OrdinalIgnoreCase);
-if (adminUserIds.Count == 0)
-    Console.WriteLine("[WARN] ADMIN_USER_IDS is not set — /api/admin endpoints will reject all requests");
 
 // ── Services ──────────────────────────────────────────
 
@@ -115,6 +118,8 @@ builder.Services.AddAuthorization(options =>
 // EF Core + PostgreSQL
 builder.Services.AddDbContext<TarotDbContext>(options =>
     options.UseNpgsql(dbConnectionString));
+builder.Services.AddHealthChecks()
+    .AddCheck<DatabaseHealthCheck>("database", tags: ["ready"]);
 
 // CORS
 builder.Services.AddCors(options =>
@@ -154,6 +159,11 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+if (adminUserIds.Count == 0)
+{
+    app.Logger.LogWarning("ADMIN_USER_IDS is not set; admin endpoints will reject all requests");
+}
+
 // ── Middleware ─────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
@@ -161,6 +171,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseRouting();
+app.UseMiddleware<RequestObservabilityMiddleware>();
+// Keep the exception handler after metrics so the final response status is recorded.
+app.UseHttpMetrics();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("AllowFrontend");
 app.UseRateLimiter();
@@ -168,5 +182,26 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/_internal/health/live", new HealthCheckOptions
+{
+    Predicate = _ => false,
+    ResponseWriter = WriteHealthResponse
+}).AllowAnonymous();
+app.MapHealthChecks("/_internal/health/ready", new HealthCheckOptions
+{
+    Predicate = registration => registration.Tags.Contains("ready"),
+    ResponseWriter = WriteHealthResponse
+}).AllowAnonymous();
+app.MapMetrics("/metrics").AllowAnonymous();
 
 app.Run();
+
+static Task WriteHealthResponse(HttpContext context, HealthReport report)
+{
+    context.Response.ContentType = "application/json";
+    return context.Response.WriteAsync(JsonSerializer.Serialize(new
+    {
+        status = report.Status.ToString().ToLowerInvariant(),
+        timestamp = DateTimeOffset.UtcNow
+    }));
+}

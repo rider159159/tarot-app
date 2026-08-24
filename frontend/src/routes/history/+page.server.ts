@@ -8,7 +8,7 @@ const PAGE_SIZE = 10;
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const { session } = await locals.safeGetSession();
-	const api = createServerApiClient(session!.access_token);
+	const api = createServerApiClient(session!.access_token, locals.requestId);
 
 	const page = Number(url.searchParams.get('page') ?? '1');
 
@@ -27,7 +27,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 export const actions: Actions = {
 	delete: async ({ request, locals }) => {
 		const { session } = await locals.safeGetSession();
-		const api = createServerApiClient(session!.access_token);
+		const api = createServerApiClient(session!.access_token, locals.requestId);
 
 		const data = await request.formData();
 		const id = data.get('id') as string;
@@ -46,11 +46,11 @@ export const actions: Actions = {
 		const { session } = await locals.safeGetSession();
 		const id = (await request.formData()).get('id')?.toString();
 		if (!id) return fail(400, { exportError: '缺少 reading id' });
-		return fetchSingleExport(session, id);
+		return fetchSingleExport(session, id, locals.requestId);
 	},
 
 	exportAll: async ({ locals }) => {
 		const { session } = await locals.safeGetSession();
-		return fetchBatchExport(session);
+		return fetchBatchExport(session, locals.requestId);
 	}
 };
