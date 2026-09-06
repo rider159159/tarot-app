@@ -13,3 +13,6 @@ vite.config.ts.timestamp-*
 **/obj/
 *.user
 .vs/
+
+# Claude Code 本機設定（會累積含 secret 的指令）
+.claude/settings.local.json
